@@ -37,7 +37,7 @@ void getCamera(glm::mat4& viewOut, glm::vec3& eyeOut) {
         /* ── 0: Sky view — wide top-down showing full arena with padding ── */
         default:
         case 0:
-            eye  = glm::vec3(0.0f, 70.0f, 0.0f);
+            eye  = glm::vec3(0.0f, 55.0f, 0.0f);
             view = glm::lookAt(eye,
                                glm::vec3(0.0f, 0.0f, 0.0f),
                                glm::vec3(0.0f, 0.0f, -1.0f));
@@ -67,35 +67,35 @@ void getCamera(glm::mat4& viewOut, glm::vec3& eyeOut) {
             break;
         }
 
-        /* ── 3: Light-source view — camera sits at the bulb, looks along the beam ── */
+        /* ── 3: Light-source view — camera sits at the bulb, looks toward the wall ── */
         case 3: {
+            /* Pick the building whose spotlight normal best faces the wall.
+               'toWall' is the radial outward direction from centre through the bulb. */
             int best = 0;
             float bestScore = -1e9f;
-            glm::vec3 bestDir(1.0f, 0.0f, 0.0f);
             for (int i = 0; i < NUM_B; i++) {
-                glm::vec3 toWall = glm::vec3(spotPos[i].x, 0.0f, spotPos[i].z);
-                if (glm::length(toWall) < 0.001f) continue;
-                toWall = glm::normalize(toWall);
-
-                /* Beam-normal direction that points as much as possible toward the wall. */
-                glm::vec3 nrm = toWall - glm::dot(toWall, spotDir[i]) * spotDir[i];
-                float nLen = glm::length(nrm);
-                if (nLen < 0.001f) continue;
-                nrm /= nLen;
-
-                float score = glm::dot(nrm, toWall);
+                glm::vec3 radial(spotPos[i].x, 0.0f, spotPos[i].z);
+                float rLen = glm::length(radial);
+                if (rLen < 0.001f) continue;
+                radial /= rLen;
+                /* Prefer gimbals whose beam is NOT aimed at the wall
+                   (so the perpendicular view toward the wall is clear). */
+                float score = rLen - fabsf(glm::dot(radial, spotDir[i])) * 5.0f;
                 if (score > bestScore) {
                     bestScore = score;
                     best = i;
-                    bestDir = nrm;
                 }
             }
+            /* Look radially outward from bulb toward the wall */
+            glm::vec3 outward(spotPos[best].x, 0.0f, spotPos[best].z);
+            float oLen = glm::length(outward);
+            if (oLen > 0.001f) outward /= oLen;
+            else outward = glm::vec3(1.0f, 0.0f, 0.0f);
 
-            eye = spotPos[best] - spotDir[best] * 0.20f;
-            glm::vec3 target = eye + bestDir * 8.0f;
-            glm::vec3 camUp = glm::normalize(-spotDir[best]);
-            if (glm::length(camUp) < 0.001f) camUp = glm::vec3(0.0f, 1.0f, 0.0f);
-            view = glm::lookAt(eye, target, camUp);
+            eye = spotPos[best];
+            glm::vec3 target = eye + outward * 10.0f;
+            /* Use world-up since outward is horizontal */
+            view = glm::lookAt(eye, target, glm::vec3(0.0f, 1.0f, 0.0f));
             break;
         }
 

@@ -32,14 +32,15 @@ void update(float dt) {
     todPeriod   = (int)(cycle / PERIOD_DUR) % NUM_PERIODS;
     todFrac     = fmodf(cycle, PERIOD_DUR) / PERIOD_DUR;  /* 0..1 within period */
 
-    /* Fade lights near the *end* of evening/night, not at period start. */
-    float periodTime = todFrac * PERIOD_DUR;
-    float fadeStart  = PERIOD_DUR - PERIOD_FADE;
+    /* Lights begin coming on at the START of evening, ramp up through the
+       full evening period, and stay fully on during night.  They fade off
+       in the last PERIOD_FADE seconds of night (transition to morning). */
     if (todPeriod == 2) {
-        lightsOn = (periodTime >= fadeStart)
-                 ? std::min((periodTime - fadeStart) / PERIOD_FADE, 1.0f)
-                 : 0.0f;
+        /* Evening: lights ramp from 0 → 1 across the entire period */
+        lightsOn = todFrac;
     } else if (todPeriod == 3) {
+        float periodTime = todFrac * PERIOD_DUR;
+        float fadeStart  = PERIOD_DUR - PERIOD_FADE;
         lightsOn = (periodTime >= fadeStart)
                  ? std::max(1.0f - (periodTime - fadeStart) / PERIOD_FADE, 0.0f)
                  : 1.0f;

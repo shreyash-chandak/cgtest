@@ -198,22 +198,14 @@ void render() {
     matStack.push(glm::mat4(1.0f));
 
     /* ══════════════════════════════════════════════
-     *  MUD GROUND DISK
+     *  MUD GROUND DISK — confined to colosseum interior only.
+     *  The ground mesh radius is COL_R_IN so it ends at the wall.
+     *  Outside the wall is bare sky (no floor drawn there).
      * ══════════════════════════════════════════════ */
-    setTexMaterial(texMud, glm::vec2(19.0f,19.0f), {0.02f,0.01f,0.01f}, 4.0f, std::max(0.05f, sky.ambStr));
-    glm::mat4 worldMud = glm::translate(top(), glm::vec3(0,-0.05f,0));
-    worldMud = glm::scale(worldMud, glm::vec3(5.8f,1.0f,5.8f));
-    setModel(worldMud);
+    setTexMaterial(texMud, glm::vec2(6.0f,6.0f), {0.02f,0.01f,0.01f}, 4.0f, std::max(0.06f, sky.ambStr));
+    setModel(top());
     mGround.draw();
     glUniform1i(uUseTex, 0);
-
-    {
-        setTexMaterial(texMud, glm::vec2(4.4f,4.4f), {0.02f,0.01f,0.01f}, 4.0f, std::max(0.05f, sky.ambStr));
-        glm::mat4 arenaMud = glm::translate(top(), glm::vec3(0,-0.015f,0));
-        arenaMud = glm::scale(arenaMud, glm::vec3((COL_R_IN-0.4f)/ARENA_R, 1.0f, (COL_R_IN-0.4f)/ARENA_R));
-        setModel(arenaMud); mGround.draw();
-        glUniform1i(uUseTex, 0);
-    }
 
     /* ══════════════════════════════════════════════
      *  MUD — central island (inside inner track)
@@ -256,6 +248,30 @@ void render() {
     glUniform1i(uUseTex, 0);
     drawKerb(mRoadInner, (TRK_A_IN+ROAD_W*0.5f+0.2f)/TRK_A_IN, (TRK_B_IN+ROAD_W*0.5f+0.2f)/TRK_B_IN);
     drawKerb(mRoadInner, (TRK_A_IN-ROAD_W*0.5f-0.2f)/TRK_A_IN, (TRK_B_IN-ROAD_W*0.5f-0.2f)/TRK_B_IN);
+
+    /* ══════════════════════════════════════════════
+     *  BUILDING-ZONE CONCENTRIC BORDER RINGS
+     *  Two stone circles that visually border the building ring
+     *  from inside (r≈11.5) and outside (r≈15).
+     * ══════════════════════════════════════════════ */
+    {
+        const float bRingInner = 11.5f;   /* inner border radius */
+        const float bRingOuter = 15.0f;   /* outer border radius */
+        const float ringW      = 0.18f;   /* ring width */
+        const float ringY      = 0.025f;  /* just above ground */
+        setMaterial({0.52f,0.46f,0.38f}, {0.08f,0.08f,0.07f}, 10.0f, sky.ambStr);
+        for (float r : {bRingInner, bRingOuter}) {
+            glm::mat4 rm = glm::translate(top(), glm::vec3(0, ringY, 0));
+            rm = glm::scale(rm, glm::vec3(r * 2.0f, 0.04f, r * 2.0f));
+            setModel(rm); mCylinder.draw();
+            /* Slightly smaller cylinder inside to leave only the ring edge */
+            setMaterial({0.55f,0.38f,0.22f}, {0.02f,0.01f,0.01f}, 4.0f, sky.ambStr);
+            glm::mat4 inner = glm::translate(top(), glm::vec3(0, ringY - 0.001f, 0));
+            inner = glm::scale(inner, glm::vec3((r - ringW) * 2.0f, 0.04f, (r - ringW) * 2.0f));
+            setModel(inner); mCylinder.draw();
+            setMaterial({0.52f,0.46f,0.38f}, {0.08f,0.08f,0.07f}, 10.0f, sky.ambStr);
+        }
+    }
 
     /* ══════════════════════════════════════════════
      *  SAND / SEATING RING

@@ -110,7 +110,7 @@ bool initGL() {
 void resetWorld() {
     /* Place car on the outer track at angle 0 (rightmost point), heading tangentially */
     carPos     = glm::vec3(TRK_A_OUT, 0.0f, 0.0f);
-    carHeading = (float)M_PI / 2.0f;
+    carHeading = -(float)M_PI / 2.0f;   /* face inward toward the buildings */
     carSpeed   = 0.0f;
     carFrozen  = false;
     wheelRot   = 0.0f;
