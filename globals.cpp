@@ -3,6 +3,7 @@
  * ===================================================================== */
 #include "gl_common.h"
 #include "globals.h"
+#include <string>
 
 int WIN_W = 1280;
 int WIN_H = 720;
@@ -24,13 +25,17 @@ GLint uFogCol, uFogDen;
 Mesh mBox, mCylinder, mSphere, mRoad, mRoadInner, mGround;
 
 GLuint texBrick=0, texWood=0, texConcrete=0, texStone=0, texCobble=0, texTorch=0, texGate=0;
+GLuint texMud=0, texGatehouse=0;
 
+/* Buildings placed on a ring at r=5 with 72-degree spacing (18-deg offset).
+   Outer face at r=6.25 stays inside inner track (r=6.5).
+   Leaves a clear circular path at r<3.75 around the central statue. */
 BuildingInfo bldg[NUM_B] = {
-    { {-3.6f, 0, -1.4f}, 3, 0, {1.0f,0.55f,0.10f}, {},{},0.0f },
-    { { 4.2f, 0, -2.0f}, 2, 1, {0.3f,0.8f, 1.0f }, {},{},0.0f },
-    { {-2.9f, 0,  3.8f}, 2, 2, {0.8f,0.25f,0.25f}, {},{},0.0f },
-    { { 3.4f, 0,  3.2f}, 1, 0, {0.3f,1.0f, 0.45f}, {},{},0.0f },
-    { { 0.6f, 0, -4.4f}, 1, 1, {0.9f,0.9f, 0.2f }, {},{},0.0f },
+    { { 4.76f, 0,  1.55f}, 3, 0, {1.0f,0.55f,0.10f}, {},{},0.0f },
+    { { 0.09f, 0,  5.00f}, 2, 1, {0.3f,0.8f, 1.0f }, {},{},0.0f },
+    { {-4.76f, 0,  1.55f}, 2, 2, {0.8f,0.25f,0.25f}, {},{},0.0f },
+    { {-2.94f, 0, -4.05f}, 1, 0, {0.3f,1.0f, 0.45f}, {},{},0.0f },
+    { { 2.94f, 0, -4.05f}, 1, 1, {0.9f,0.9f, 0.2f }, {},{},0.0f },
 };
 
 glm::vec3 carPos;
@@ -55,6 +60,11 @@ int   camMode    = 0;
 float gndSwivel  = 0.0f;
 
 bool bulletTime  = false;
+
+bool        cheatMode   = false;
+std::string cheatBuffer;
+bool        superMode        = false;
+bool        showBoundingBox  = false;
 
 std::stack<glm::mat4> matStack;
 

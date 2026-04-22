@@ -46,6 +46,7 @@ int main() {
     }
     glfwMakeContextCurrent(win);
     glfwSetKeyCallback(win, keyCallback);
+    glfwSetCharCallback(win, charCallback);
     glfwSetFramebufferSizeCallback(win, framebufferCB);
     glfwSwapInterval(1);    /* vsync */
 

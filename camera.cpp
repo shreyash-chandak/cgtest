@@ -34,13 +34,13 @@ void getCamera(glm::mat4& viewOut, glm::vec3& eyeOut) {
 
     switch (camMode) {
 
-        /* ── 0: Sky view — top-down, centred on arena ── */
+        /* ── 0: Sky view — wide top-down showing full arena with padding ── */
         default:
         case 0:
-            eye  = glm::vec3(0.0f, 37.0f, 6.5f);
+            eye  = glm::vec3(0.0f, 62.0f, 9.0f);
             view = glm::lookAt(eye,
                                glm::vec3(0.0f, 0.0f, 0.0f),
-                               glm::vec3(0.0f, 1.0f, 0.0f));
+                               glm::vec3(0.0f, 0.0f, -1.0f));
             break;
 
         /* ── 1: Car view — roof-mounted, looks forward ── */
@@ -67,31 +67,28 @@ void getCamera(glm::mat4& viewOut, glm::vec3& eyeOut) {
             break;
         }
 
-        /* ── 3: Light-source view — rides gimbal of building 0 ── */
+        /* ── 3: Light-source view — camera sits at the bulb, looks along the beam ── */
         case 3: {
-            /* spotPos[0]  = world position of the bulb (tip of the arm)
-               spotDir[0]  = direction the spotlight points (forward along arm)
-               spotGimbalMat[0] = full 4×4 gimbal transform stored each frame
-                                  in update.cpp
+            /* spotPos[0]  = world position of the bulb
+               spotDir[0]  = unit vector the spotlight points toward
+               spotGimbalMat[0] = gimbal transform; column 1 = gimbal local-Y
 
-               We extract the gimbal's local Y axis as our camera up-vector.
-               This is always perpendicular to spotDir regardless of pitch,
-               so lookAt never degenerates. */
+               Camera eye is at the bulb, target is one unit along the beam.
+               The gimbal's local-Y gives a stable up vector that is always
+               perpendicular to spotDir, preventing lookAt degeneracy. */
 
-            glm::vec3 gimbalUp = glm::normalize(glm::vec3(spotGimbalMat[0][1]));
+            eye = spotPos[0];
+            glm::vec3 target = spotPos[0] + spotDir[0];
 
-            /* Safety: if gimbalUp is somehow nearly parallel to spotDir
-               (shouldn't happen with a proper gimbal) fall back to world up. */
-            if (fabsf(glm::dot(gimbalUp, spotDir[0])) > 0.99f)
-                gimbalUp = glm::vec3(0.0f, 1.0f, 0.0f);
+            /* Gimbal local-Y as up */
+            glm::vec3 camUp = glm::normalize(glm::vec3(spotGimbalMat[0][1]));
 
-            eye = spotPos[0] + gimbalUp * 0.38f;
-            glm::vec3 lookDir = glm::normalize(gimbalUp);
-            glm::vec3 camUp   = glm::normalize(-spotDir[0]);
-            if (fabsf(glm::dot(lookDir, camUp)) > 0.98f)
-                camUp = glm::vec3(0.0f, 1.0f, 0.0f);
+            /* Safety: if up is nearly parallel to the view direction use world X */
+            glm::vec3 viewDir = glm::normalize(target - eye);
+            if (fabsf(glm::dot(camUp, viewDir)) > 0.98f)
+                camUp = glm::vec3(1.0f, 0.0f, 0.0f);
 
-            view = glm::lookAt(eye, eye + lookDir, camUp);
+            view = glm::lookAt(eye, target, camUp);
             break;
         }
 

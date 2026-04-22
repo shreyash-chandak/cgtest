@@ -18,4 +18,5 @@
 #include "gl_common.h"
 
 void keyCallback(GLFWwindow* w, int key, int sc, int action, int mods);
+void charCallback(GLFWwindow* w, unsigned int codepoint);
 void framebufferCB(GLFWwindow* w, int width, int height);

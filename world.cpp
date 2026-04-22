@@ -26,13 +26,15 @@ bool initGL() {
     glUniform1i(glGetUniformLocation(shaderProg, "diffuseTexture"), 0);
 
     /* Image-first textures (assignment assets) with procedural fallback */
-    texBrick    = loadImageTex("images/building_view_closed.png");
-    texWood     = loadImageTex("images/textures.png");
-    texConcrete = loadImageTex("images/building_with_gate.jpeg");
-    texStone    = loadImageTex("images/colosseum_inner_wall.png");
-    texCobble   = loadImageTex("images/ground_view.png");
-    texTorch    = loadImageTex("images/burning_torch.png");
-    texGate     = loadImageTex("images/building_with_gate.jpeg");
+    texBrick      = loadImageTex("images/building_view_closed.png");
+    texWood       = loadImageTex("images/textures.png");
+    texConcrete   = loadImageTex("images/building_with_gate.jpeg");
+    texStone      = loadImageTex("images/colosseum_inner_wall.png");
+    texCobble     = loadImageTex("images/ground_view.png");
+    texTorch      = loadImageTex("images/burning_torch.png");
+    texGate       = loadImageTex("images/building_with_gate.jpeg");
+    texMud        = loadImageTex("images/mud_texture.jpg");
+    texGatehouse  = loadImageTex("images/gatehouse.jpg");
 
     const int TW = 256, TH = 256;
     std::vector<unsigned char> buf(TW * TH * 3);
@@ -56,8 +58,21 @@ bool initGL() {
         genCobbleTex(buf.data(), TW, TH);
         texCobble = uploadTex(buf.data(), TW, TH);
     }
-    if (!texTorch) texTorch = texWood;
-    if (!texGate)  texGate  = texConcrete;
+    if (!texTorch)    texTorch    = texWood;
+    if (!texGate)     texGate     = texConcrete;
+    /* Mud: procedural fallback — warm dark brown */
+    if (!texMud) {
+        for (int i = 0; i < TW * TH; i++) {
+            unsigned n = (unsigned)(i * 1664525u + 1013904223u);
+            n ^= (n << 13); n ^= (n >> 17); n ^= (n << 5);
+            float v = (float)(n & 0xffu) / 255.0f;
+            buf[i*3+0] = (unsigned char)(90  + v * 30);
+            buf[i*3+1] = (unsigned char)(58  + v * 20);
+            buf[i*3+2] = (unsigned char)(32  + v * 12);
+        }
+        texMud = uploadTex(buf.data(), TW, TH);
+    }
+    if (!texGatehouse) texGatehouse = texBrick;
 
     /* Meshes */
     mBox        = createBox();
@@ -105,8 +120,12 @@ void resetWorld() {
     globalTime = 0.0f;
     camMode    = 0;
     gndSwivel  = 0.0f;
-    bulletTime = false;
-    useChariot = false;
+    bulletTime      = false;
+    useChariot      = false;
+    cheatMode       = false;
+    cheatBuffer.clear();
+    superMode       = false;
+    showBoundingBox = false;
 }
 
 bool checkCollision(glm::vec3 pos, float heading) {
@@ -123,11 +142,13 @@ bool checkCollision(glm::vec3 pos, float heading) {
         /* Colosseum inner wall (circular) */
         float r=sqrtf(cx*cx+cz*cz);
         if (r > COL_R_IN - 1.0f) return true;
-        /* Buildings */
-        for (int b=0;b<NUM_B;b++) {
-            float bx=bldg[b].pos.x, bz=bldg[b].pos.z;
-            if (cx>bx-B_HALF&&cx<bx+B_HALF&&cz>bz-B_HALF&&cz<bz+B_HALF)
-                return true;
+        /* Buildings — skipped in superMode */
+        if (!superMode) {
+            for (int b=0;b<NUM_B;b++) {
+                float bx=bldg[b].pos.x, bz=bldg[b].pos.z;
+                if (cx>bx-B_HALF&&cx<bx+B_HALF&&cz>bz-B_HALF&&cz<bz+B_HALF)
+                    return true;
+            }
         }
     }
     return false;

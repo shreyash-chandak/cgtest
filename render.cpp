@@ -123,7 +123,7 @@ void render() {
     /* ── Light slot 0-4: building gimbal spotlights ──
        Strength scales with lightsOn so they fade in at evening. */
     float isNight = (sky.sunStr < 0.03f) ? 1.0f : 0.0f;
-    float gimbalStrength = (1.0f - isNight) * lightsOn * 2.2f;
+    float gimbalStrength = (1.0f - isNight) * lightsOn * 4.5f;
     for (int i = 0; i < NUM_B; i++) {
         setLight(i, spotPos[i], bldg[i].lightCol, spotDir[i],
                  cosf(glm::radians(35.0f)), gimbalStrength);
@@ -144,11 +144,11 @@ void render() {
             carPos + fwd*hz + right*hx + glm::vec3(0,hy,0),
             carPos + fwd*hz - right*hx + glm::vec3(0,hy,0),
         };
-        /* Cone axis: forward and slightly downward so it hits the road */
-        glm::vec3 hlDir = glm::normalize(fwd + glm::vec3(0, useChariot ? -0.10f : -0.18f, 0));
-        float hlStr = (headlightsOn) ? (useChariot ? 4.3f : 6.0f) : 0.0f;
-        /* Wide enough to illuminate the road ahead visibly */
-        float hlCut = cosf(glm::radians(useChariot ? 26.0f : 22.0f));
+        /* Cone axis: forward and steeply enough downward to pool light on the ground */
+        glm::vec3 hlDir = glm::normalize(fwd + glm::vec3(0, useChariot ? -0.38f : -0.50f, 0));
+        float hlStr = (headlightsOn) ? (useChariot ? 7.0f : 9.5f) : 0.0f;
+        /* Wider cone so light reaches the ground surface visibly */
+        float hlCut = cosf(glm::radians(useChariot ? 32.0f : 30.0f));
         glm::vec3 hlCol = useChariot
                         ? glm::vec3(1.0f, 0.82f, 0.52f)
                         : glm::vec3(1.0f, 0.97f, 0.85f);
@@ -190,19 +190,19 @@ void render() {
     matStack.push(glm::mat4(1.0f));
 
     /* ══════════════════════════════════════════════
-     *  COBBLESTONE GROUND DISK
+     *  MUD GROUND DISK
      * ══════════════════════════════════════════════ */
-    setTexMaterial(texCobble, glm::vec2(1.35f,1.35f), {0.03f,0.03f,0.03f}, 6.0f);
+    setTexMaterial(texMud, glm::vec2(3.5f,3.5f), {0.02f,0.01f,0.01f}, 4.0f);
     glUniform1f(uAmbi, sky.ambStr);
     setModel(top());
     mGround.draw();
     glUniform1i(uUseTex, 0);
 
     /* ══════════════════════════════════════════════
-     *  GRASS — central island (inside inner track)
+     *  MUD — central island (inside inner track)
      * ══════════════════════════════════════════════ */
     {
-        setTexMaterial(texGate, glm::vec2(0.40f,0.40f), {0.03f,0.03f,0.03f}, 5.0f);
+        setTexMaterial(texMud, glm::vec2(1.8f,1.8f), {0.02f,0.01f,0.01f}, 4.0f);
         glUniform1f(uAmbi, sky.ambStr);
         glm::mat4 gm = glm::scale(top(), glm::vec3(
             (TRK_A_IN - ROAD_W*0.5f - 0.5f)/ARENA_R, 1.0f,
@@ -259,7 +259,7 @@ void render() {
     {
         static Mesh colMesh = createColosseum();
         setTexMaterial(texStone, glm::vec2(2.6f,1.4f), {0.06f,0.05f,0.04f},16.0f);
-        glUniform1f(uAmbi, sky.ambStr + 0.015f);
+        glUniform1f(uAmbi, sky.ambStr + 0.035f);
         setModel(top());
         colMesh.draw();
         glUniform1i(uUseTex, 0);
@@ -489,9 +489,15 @@ void render() {
         float bldgH = (float)B.stories * STORY_H;
         pushM(glm::translate(top(), B.pos));
 
-        GLuint tex=(B.texType==0)?texBrick:(B.texType==1)?texWood:texConcrete;
-        setTexMaterial(tex, glm::vec2(0.50f, bldgH*0.26f), {0.06f,0.06f,0.06f},14.0f);
-        glUniform1f(uAmbi, sky.ambStr + 0.01f);
+        /* texType 0 → building_view_closed.png (brick/stone face)
+           texType 1 → building_with_gate.jpeg (gate-house wall)
+           texType 2 → gatehouse.jpg (full castle wall) */
+        GLuint tex = (B.texType==0) ? texBrick
+                   : (B.texType==1) ? texGate
+                   :                  texGatehouse;
+        /* Scale so each story is one tile vertically */
+        setTexMaterial(tex, glm::vec2(1.0f, (float)B.stories * 0.5f), {0.06f,0.06f,0.06f},14.0f);
+        glUniform1f(uAmbi, sky.ambStr + 0.02f);
         {
             glm::mat4 body=glm::translate(top(),glm::vec3(0,bldgH*0.5f,0));
             body=glm::scale(body,glm::vec3(B_HALF*2,bldgH,B_HALF*2));
@@ -533,9 +539,9 @@ void render() {
                         glm::vec3 center = sideN[s] * (B_HALF + 0.03f)
                                          + sideT[s] * sideShift
                                          + glm::vec3(0,wy,0);
-                        glm::vec3 paneEmit = glm::vec3(2.25f,1.95f,1.55f) * lightsOn * litMask;
+                        glm::vec3 paneEmit = glm::vec3(5.5f,4.5f,2.8f) * lightsOn * litMask;
                         glm::vec3 paneCol  = glm::mix(glm::vec3(0.07f,0.10f,0.14f),
-                                                      glm::vec3(0.96f,0.84f,0.56f),
+                                                      glm::vec3(1.0f,0.90f,0.62f),
                                                       lightsOn * litMask);
                         setMaterial(paneCol, {0.02f,0.02f,0.02f}, 18.0f, sky.ambStr, paneEmit);
                         glm::mat4 wp = glm::translate(top(), center);
@@ -775,5 +781,25 @@ void render() {
         }
 
         popM(); /* car */
+    }
+
+    /* ══════════════════════════════════════════════
+     *  CAR BOUNDING BOX (blue wireframe, cheat: box)
+     * ══════════════════════════════════════════════ */
+    if (showBoundingBox) {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glDisable(GL_CULL_FACE);
+        /* Draw the car footprint as a flat thin box at body height */
+        float boxY = WHL_R + CAR_BH * 0.5f;
+        setMaterial({0.0f, 0.2f, 1.0f}, {0,0,0}, 1.0f, 1.0f,
+                    {0.0f, 0.3f, 1.8f});
+        {
+            glm::mat4 bm = glm::translate(top(), carPos + glm::vec3(0, boxY, 0));
+            bm = glm::rotate(bm, carHeading, glm::vec3(0,1,0));
+            bm = glm::scale(bm, glm::vec3(CAR_W, CAR_BH + CAR_CH, CAR_L));
+            setModel(bm); mBox.draw();
+        }
+        glEnable(GL_CULL_FACE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 }

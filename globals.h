@@ -5,6 +5,7 @@
 #include "types.h"
 #include "constants.h"
 #include <stack>
+#include <string>
 
 /* ── Window ── */
 extern int WIN_W;
@@ -31,6 +32,7 @@ extern Mesh mBox, mCylinder, mSphere, mRoad, mRoadInner, mGround;
 
 /* ── Textures ── */
 extern GLuint texBrick, texWood, texConcrete, texStone, texCobble, texTorch, texGate;
+extern GLuint texMud, texGatehouse;
 
 /* ── Building data ── */
 extern BuildingInfo bldg[NUM_B];
@@ -65,6 +67,14 @@ extern float gndSwivel;
 
 /* ── Bonus ── */
 extern bool bulletTime;
+
+/* ── Cheat code system ── */
+extern bool        cheatMode;
+extern std::string cheatBuffer;
+
+/* ── Cheat-activated flags ── */
+extern bool superMode;        /* disable building collision */
+extern bool showBoundingBox;  /* show car bounding box in blue */
 
 /* ── Matrix stack ── */
 extern std::stack<glm::mat4> matStack;
