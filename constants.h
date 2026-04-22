@@ -31,6 +31,7 @@ static const float ARENA_R   = 26.0f;
 static const int   NUM_B     = 5;
 static const float B_HALF    = 1.25f;
 static const float STORY_H   = 2.5f;
+static const float B_GATE_HALF = 0.95f;  /* half-width of passable gate opening */
 
 /* ── Torches ── */
 static const int   NUM_TORCH  = 16;
@@ -67,12 +68,14 @@ static const float SW_MAX    = 30.0f;
 
 /* ── Lighting slots ──
    MAX_LIGHTS must match fragment.glsl #define. */
-static const int MAX_LIGHTS      = 10;
-static const int LIGHT_GIMBAL_0  = 0;  /* slots 0-4: building gimbals      */
-static const int LIGHT_HEADLIGHT = 5;  /* slots 5-6: car headlights        */
-static const int LIGHT_TORCH_0   = 7;  /* slots 7-9: 3 nearest torches     */
+static const int MAX_LIGHTS      = 25;
+static const int LIGHT_GIMBAL_0  = 0;  /* slots 0-4:  building gimbals     */
+static const int LIGHT_HEADLIGHT = 5;  /* slots 5-6:  forward headlights   */
+static const int LIGHT_DIPPER    = 7;  /* slots 7-8:  dipper lights        */
+static const int LIGHT_TORCH_0   = 9;  /* slots 9-24: ALL 16 torches       */
 static const int NUM_HEADLIGHTS  = 2;
-static const int NUM_TORCH_SLOTS = 3;
+static const int NUM_DIPPER      = 2;
+static const int NUM_TORCH_SLOTS = 16; /* all torches lit equally           */
 
 /* ── Time-of-day periods ──
    Each period lasts PERIOD_DUR seconds; blend over PERIOD_FADE. */

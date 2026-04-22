@@ -67,10 +67,9 @@ void update(float dt) {
     for (int i = 0; i < NUM_B; i++) {
         float bldgH = bldg[i].stories * STORY_H;
         glm::vec3 mount = bldg[i].pos + glm::vec3(0.0f, bldgH + 0.3f, 0.0f);
-        glm::vec3 toRd  = bldg[i].nearRoad - mount;
-        float baseYaw   = atan2f(toRd.x, toRd.z);
-        float pitch     = atan2f(-toRd.y, sqrtf(toRd.x*toRd.x + toRd.z*toRd.z));
+        float baseYaw   = bldg[i].roadYaw;
         float swing     = glm::radians(SW_MAX) * sinf(globalTime * SW_SPD + (float)i);
+        float pitch     = glm::radians(78.0f); /* steep down-tilt toward floor */
 
         glm::mat4 M(1.0f);
         M = glm::translate(M, mount);
@@ -78,6 +77,7 @@ void update(float dt) {
         M = glm::rotate(M, pitch,           glm::vec3(1,0,0));
         spotGimbalMat[i] = M;
         spotPos[i] = glm::vec3(M * glm::vec4(0,0,LT_ARM,1));
-        spotDir[i] = glm::normalize(glm::vec3(M * glm::vec4(0,0,1,0)));
+        glm::vec3 nearestGround(spotPos[i].x, 0.03f, spotPos[i].z);
+        spotDir[i] = glm::normalize(nearestGround - spotPos[i]);
     }
 }

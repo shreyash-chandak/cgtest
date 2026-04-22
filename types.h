@@ -20,8 +20,8 @@ struct Mesh {
 /* ── Per-building data ── */
 struct BuildingInfo {
     glm::vec3 pos;          /* base centre world position              */
-    int       stories;      /* 1, 2, or 3                              */
-    int       texType;      /* 0 = brick, 1 = wood, 2 = concrete       */
+    int       stories;      /* building storeys (4+ in current setup)  */
+    int       texType;      /* 0 = closed facade, 1 = gate facade      */
     glm::vec3 lightCol;     /* spotlight colour                        */
     /* Pre-computed at init: */
     glm::vec3 nearRoad;     /* closest point on track centre-line      */

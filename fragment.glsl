@@ -3,9 +3,10 @@
  *  Blinn-Phong lighting with:
  *    • 1 directional sun (colour + strength driven by time-of-day)
  *    • Up to MAX_LIGHTS coloured spot/point lights
- *        slots 0-4  : building gimbal spotlights
- *        slots 5-6  : car headlights (spot cones)
- *        slots 7-9  : nearest torches (wide-cone point lights, night only)
+ *        slots 0-3   : building gimbal spotlights
+ *        slots 4-5   : car headlights (spot cones)
+ *        slots 6-7   : dipper lights (ground-facing)
+ *        slots 8-10  : nearest torches (wide-cone point lights, night only)
  *    • Emissive term
  *    • Exponential fog  +  Reinhard tone-map
  * =================================================================== */
@@ -35,7 +36,7 @@ uniform vec3  sunColor;
 uniform float sunStrength;
 
 /* ---- Point / spot lights ---- */
-#define MAX_LIGHTS 10
+#define MAX_LIGHTS 25
 uniform int   numLights;
 uniform vec3  lightPos      [MAX_LIGHTS];
 uniform vec3  lightColor    [MAX_LIGHTS];

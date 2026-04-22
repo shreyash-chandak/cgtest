@@ -92,7 +92,7 @@ bool initGL() {
     }
 
     /* Pre-compute building geometry helpers.
-       Each building's gimbal targets the OUTER track (most visible direction). */
+       Gimbal base yaw tracks nearest-road orientation; final beam aim is updated per frame. */
     for (int i=0;i<NUM_B;i++) {
         bldg[i].nearRoad = nearestTrack(bldg[i].pos);
         glm::vec3 diff   = bldg[i].nearRoad - bldg[i].pos;
@@ -142,12 +142,24 @@ bool checkCollision(glm::vec3 pos, float heading) {
         /* Colosseum inner wall (circular) */
         float r=sqrtf(cx*cx+cz*cz);
         if (r > COL_R_IN - 1.0f) return true;
-        /* Buildings — skipped in superMode */
+        /* Buildings — skipped in superMode.
+           Gate buildings keep a centered pass-through opening. */
         if (!superMode) {
             for (int b=0;b<NUM_B;b++) {
                 float bx=bldg[b].pos.x, bz=bldg[b].pos.z;
-                if (cx>bx-B_HALF&&cx<bx+B_HALF&&cz>bz-B_HALF&&cz<bz+B_HALF)
+                if (cx>bx-B_HALF&&cx<bx+B_HALF&&cz>bz-B_HALF&&cz<bz+B_HALF) {
+                    bool hasGate = (bldg[b].texType == 1);
+                    if (hasGate) {
+                        float dx = cx - bx;
+                        float dz = cz - bz;
+                        bool gateAlongX = fabsf(bldg[b].toRoad.x) > fabsf(bldg[b].toRoad.z);
+                        float gateHalf = B_GATE_HALF - 0.05f;
+                        bool inOpening = gateAlongX ? (fabsf(dz) <= gateHalf)
+                                                    : (fabsf(dx) <= gateHalf);
+                        if (inOpening) continue;
+                    }
                     return true;
+                }
             }
         }
     }

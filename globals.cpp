@@ -27,15 +27,17 @@ Mesh mBox, mCylinder, mSphere, mRoad, mRoadInner, mGround;
 GLuint texBrick=0, texWood=0, texConcrete=0, texStone=0, texCobble=0, texTorch=0, texGate=0;
 GLuint texMud=0, texGatehouse=0;
 
-/* Buildings placed on a ring at r=5 with 72-degree spacing (18-deg offset).
-   Outer face at r=6.25 stays inside inner track (r=6.5).
-   Leaves a clear circular path at r<3.75 around the central statue. */
+/* Buildings form a circle at radius ~13.5 (halfway between centre and
+   colosseum wall at r=27).  Angles are roughly 72° apart.
+   Modify the .pos field to relocate any building.
+   texType 0 = closed facade (building_view_closed.png).
+   texType 1 = gate facade (building_with_gate.jpeg). */
 BuildingInfo bldg[NUM_B] = {
-    { { 4.76f, 0,  1.55f}, 3, 0, {1.0f,0.55f,0.10f}, {},{},0.0f },
-    { { 0.09f, 0,  5.00f}, 2, 1, {0.3f,0.8f, 1.0f }, {},{},0.0f },
-    { {-4.76f, 0,  1.55f}, 2, 2, {0.8f,0.25f,0.25f}, {},{},0.0f },
-    { {-2.94f, 0, -4.05f}, 1, 0, {0.3f,1.0f, 0.45f}, {},{},0.0f },
-    { { 2.94f, 0, -4.05f}, 1, 1, {0.9f,0.9f, 0.2f }, {},{},0.0f },
+    { { 13.0f, 0,   0.0f}, 5, 0, {1.00f,0.55f,0.18f}, {},{},0.0f },  /* 0°   closed */
+    { {  4.0f, 0,  12.4f}, 4, 0, {0.22f,0.78f,1.00f}, {},{},0.0f },  /* 72°  closed */
+    { {-10.5f, 0,   7.6f}, 5, 1, {0.80f,0.25f,0.95f}, {},{},0.0f },  /* 144° gate   */
+    { {-10.5f, 0,  -7.6f}, 4, 1, {0.55f,1.00f,0.30f}, {},{},0.0f },  /* 216° gate   */
+    { {  4.0f, 0, -12.4f}, 4, 0, {0.90f,0.90f,0.20f}, {},{},0.0f },  /* 288° closed */
 };
 
 glm::vec3 carPos;

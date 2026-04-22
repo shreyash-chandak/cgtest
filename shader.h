@@ -26,7 +26,8 @@ void setMaterial(glm::vec3 col, glm::vec3 spec, float shine,
                  float ambi = 0.15f, glm::vec3 emit = glm::vec3(0));
 
 /* Set a textured material */
-void setTexMaterial(GLuint tex, glm::vec2 scale, glm::vec3 spec, float shine);
+void setTexMaterial(GLuint tex, glm::vec2 scale, glm::vec3 spec, float shine,
+                    float ambi = 0.15f);
 
 /* Embedded GLSL fallbacks (used when external files are missing) */
 extern const char* VS_FALLBACK;

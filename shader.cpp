@@ -39,7 +39,7 @@ uniform vec2 texScale;
 uniform float shininess, ambientStrength;
 uniform vec3 sunDir, sunColor, fogColor;
 uniform float sunStrength, fogDensity;
-#define MAX_LIGHTS 5
+#define MAX_LIGHTS 25
 uniform int numLights;
 uniform vec3 lightPos[MAX_LIGHTS], lightColor[MAX_LIGHTS], lightDirection[MAX_LIGHTS];
 uniform float lightCutoff[MAX_LIGHTS];
@@ -56,13 +56,17 @@ void main(){
     for(int i=0;i<numLights&&i<MAX_LIGHTS;i++){
         vec3 fl=lightPos[i]-FragPos; float d=length(fl); vec3 ld=fl/d;
         float at=1.0/(1.0+0.09*d+0.032*d*d);
-        float th=dot(ld,normalize(-lightDirection[i]));
-        float outer=lightCutoff[i]-0.18;
-        float sp=clamp((th-outer)/(lightCutoff[i]-outer),0.0,1.0);
+        float sp=1.0;
+        if(lightCutoff[i]<1.0){
+            float th=dot(ld,normalize(-lightDirection[i]));
+            float outer=lightCutoff[i]-0.18;
+            sp=clamp((th-outer)/(lightCutoff[i]-outer),0.0,1.0);
+        }
         float df=max(dot(N,ld),0.0);
         vec3 hh=normalize(ld+V);
         float ss=pow(max(dot(N,hh),0.0),shininess);
-        res+=at*sp*df*base*lightColor[i]+at*sp*ss*specularColor*lightColor[i];
+        float I=lightStrength[i];
+        res+=I*(at*sp*df*base*lightColor[i]+at*sp*ss*specularColor*lightColor[i]);
     }
     res+=emissiveColor;
     float cd=length(viewPos-FragPos);
@@ -145,13 +149,14 @@ void setMaterial(glm::vec3 col, glm::vec3 spec, float shine,
     glUniform2f (uTexScale, 1.0f, 1.0f);
 }
 
-void setTexMaterial(GLuint tex, glm::vec2 scale, glm::vec3 spec, float shine) {
+void setTexMaterial(GLuint tex, glm::vec2 scale, glm::vec3 spec, float shine,
+                    float ambi) {
     glUniform1i (uUseTex,  1);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, tex);
     glUniform2fv(uTexScale, 1, glm::value_ptr(scale));
     glUniform3fv(uSpecCol,  1, glm::value_ptr(spec));
     glUniform1f (uShine,    shine);
-    glUniform1f (uAmbi,     0.15f);
+    glUniform1f (uAmbi,     ambi);   // ← use passed value
     glUniform3fv(uEmissive, 1, glm::value_ptr(glm::vec3(0)));
 }

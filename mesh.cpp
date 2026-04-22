@@ -104,21 +104,24 @@ Mesh createSphere(int sl, int st) {
     return makeMesh(v);
 }
 
-/* ── Circular cobblestone ground disk ── */
+/* ── Circular ground disk ──
+   WINDING FIX: vertices emitted as c → p2 → p1 so the front face
+   (CCW in OpenGL) points UP (+Y) and is not back-face culled.
+   Radius uses COL_R_IN so the floor extends right up to the wall. */
 Mesh createGround() {
     std::vector<float> v;
     glm::vec3 up(0,1,0);
     const float y=-0.01f;
+    const float R = COL_R_IN;          /* extend to the wall — no gap */
     const int N=80;
     for (int i=0;i<N;i++) {
         float t1=2*(float)M_PI*i/N, t2=2*(float)M_PI*(i+1)/N;
         glm::vec3 c(0,y,0);
-        glm::vec3 p1(ARENA_R*cosf(t1),y,ARENA_R*sinf(t1));
-        glm::vec3 p2(ARENA_R*cosf(t2),y,ARENA_R*sinf(t2));
-        /* UV scaled so the cobble pattern tiles naturally */
+        glm::vec3 p1(R*cosf(t1),y,R*sinf(t1));
+        glm::vec3 p2(R*cosf(t2),y,R*sinf(t2));
         pv(v,c,up,{0.5f,0.5f});
-        pv(v,p1,up,{cosf(t1)*ARENA_R/8.0f+0.5f, sinf(t1)*ARENA_R/8.0f+0.5f});
-        pv(v,p2,up,{cosf(t2)*ARENA_R/8.0f+0.5f, sinf(t2)*ARENA_R/8.0f+0.5f});
+        pv(v,p2,up,{cosf(t2)*R/8.0f+0.5f, sinf(t2)*R/8.0f+0.5f});
+        pv(v,p1,up,{cosf(t1)*R/8.0f+0.5f, sinf(t1)*R/8.0f+0.5f});
     }
     return makeMesh(v);
 }
