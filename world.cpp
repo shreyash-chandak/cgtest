@@ -25,14 +25,39 @@ bool initGL() {
     cacheUniforms();
     glUniform1i(glGetUniformLocation(shaderProg, "diffuseTexture"), 0);
 
-    /* Procedural textures */
-    const int TW=256, TH=256;
-    std::vector<unsigned char> buf(TW*TH*3);
-    genBrickTex   (buf.data(),TW,TH); texBrick    = uploadTex(buf.data(),TW,TH);
-    genWoodTex    (buf.data(),TW,TH); texWood     = uploadTex(buf.data(),TW,TH);
-    genConcreteTex(buf.data(),TW,TH); texConcrete = uploadTex(buf.data(),TW,TH);
-    genStoneTex   (buf.data(),TW,TH); texStone    = uploadTex(buf.data(),TW,TH);
-    genCobbleTex  (buf.data(),TW,TH); texCobble   = uploadTex(buf.data(),TW,TH);
+    /* Image-first textures (assignment assets) with procedural fallback */
+    texBrick    = loadImageTex("images/building_view_closed.png");
+    texWood     = loadImageTex("images/textures.png");
+    texConcrete = loadImageTex("images/building_with_gate.jpeg");
+    texStone    = loadImageTex("images/colosseum_inner_wall.png");
+    texCobble   = loadImageTex("images/ground_view.png");
+    texTorch    = loadImageTex("images/burning_torch.png");
+    texGate     = loadImageTex("images/building_with_gate.jpeg");
+
+    const int TW = 256, TH = 256;
+    std::vector<unsigned char> buf(TW * TH * 3);
+    if (!texBrick) {
+        genBrickTex(buf.data(), TW, TH);
+        texBrick = uploadTex(buf.data(), TW, TH);
+    }
+    if (!texWood) {
+        genWoodTex(buf.data(), TW, TH);
+        texWood = uploadTex(buf.data(), TW, TH);
+    }
+    if (!texConcrete) {
+        genConcreteTex(buf.data(), TW, TH);
+        texConcrete = uploadTex(buf.data(), TW, TH);
+    }
+    if (!texStone) {
+        genStoneTex(buf.data(), TW, TH);
+        texStone = uploadTex(buf.data(), TW, TH);
+    }
+    if (!texCobble) {
+        genCobbleTex(buf.data(), TW, TH);
+        texCobble = uploadTex(buf.data(), TW, TH);
+    }
+    if (!texTorch) texTorch = texWood;
+    if (!texGate)  texGate  = texConcrete;
 
     /* Meshes */
     mBox        = createBox();
@@ -74,12 +99,14 @@ void resetWorld() {
     carSpeed   = 0.0f;
     carFrozen  = false;
     wheelRot   = 0.0f;
+    headlightsOn = true;
     fanAngle   = 0.0f;
     fanSpeed   = FAN_BSPD;
     globalTime = 0.0f;
     camMode    = 0;
     gndSwivel  = 0.0f;
     bulletTime = false;
+    useChariot = false;
 }
 
 bool checkCollision(glm::vec3 pos, float heading) {

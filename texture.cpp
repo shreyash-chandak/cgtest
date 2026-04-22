@@ -5,6 +5,10 @@
 #include "texture.h"
 #include <algorithm>
 #include <cmath>
+#include <iostream>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
 
 /* Simple integer hash → [0,1) */
 static float hashNoise(int x, int y) {
@@ -26,6 +30,44 @@ GLuint uploadTex(unsigned char* data, int w, int h) {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,   GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER,   GL_LINEAR);
     return t;
+}
+
+GLuint loadImageTex(const char* path, bool flipY) {
+    stbi_set_flip_vertically_on_load(flipY ? 1 : 0);
+
+    int w = 0, h = 0, n = 0;
+    unsigned char* data = stbi_load(path, &w, &h, &n, 0);
+    if (!data || w <= 0 || h <= 0) {
+        std::cerr << "Failed to load image texture: " << path << "\n";
+        if (data) stbi_image_free(data);
+        return 0;
+    }
+
+    GLenum format = GL_RGB;
+    GLenum internal = GL_RGB8;
+    if (n == 1) {
+        format = GL_RED;
+        internal = GL_R8;
+    } else if (n == 3) {
+        format = GL_RGB;
+        internal = GL_RGB8;
+    } else {
+        format = GL_RGBA;
+        internal = GL_RGBA8;
+    }
+
+    GLuint tex = 0;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+    glTexImage2D(GL_TEXTURE_2D, 0, internal, w, h, 0, format, GL_UNSIGNED_BYTE, data);
+    glGenerateMipmap(GL_TEXTURE_2D);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    stbi_image_free(data);
+    return tex;
 }
 
 void genBrickTex(unsigned char* d, int W, int H) {

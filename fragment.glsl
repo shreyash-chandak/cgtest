@@ -55,7 +55,8 @@ vec3 calcSun(vec3 N, vec3 V, vec3 base)
     vec3  H    = normalize(L + V);
     float spec = pow(max(dot(N, H), 0.0), shininess);
 
-    return ambientStrength * base * sunColor
+    float amb = ambientStrength * sunStrength;
+    return amb * base * sunColor
          + sunStrength * diff * base * sunColor
          + sunStrength * spec * specularColor * sunColor;
 }

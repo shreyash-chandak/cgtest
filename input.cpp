@@ -91,6 +91,10 @@ void keyCallback(GLFWwindow* w, int key, int /*sc*/, int action, int mods) {
             headlightsOn = !headlightsOn;
             break;
 
+        case GLFW_KEY_P:
+            useChariot = !useChariot;
+            break;
+
         /* ── Bullet time ── */
         case GLFW_KEY_B:
             bulletTime = !bulletTime;

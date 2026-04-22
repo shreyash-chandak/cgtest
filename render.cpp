@@ -63,30 +63,33 @@ struct PeriodSky {
 
 static const PeriodSky PERIODS[4] = {
     /* 0 — Early morning */
-    { {0.82f,0.58f,0.42f}, {1.0f,0.82f,0.62f},
-      glm::normalize(glm::vec3(-0.8f,-0.3f, 0.5f)),
-      0.45f, 0.25f,
-      {0.72f,0.52f,0.38f}, 0.010f },
+    { {0.66f,0.72f,0.78f}, {1.00f,0.95f,0.90f},
+      glm::normalize(glm::vec3(-0.75f,-0.45f, 0.45f)),
+      0.70f, 0.14f,
+      {0.62f,0.66f,0.70f}, 0.006f },
     /* 1 — Noon */
-    { {0.42f,0.72f,0.95f}, {1.0f,0.97f,0.90f},
-      glm::normalize(glm::vec3( 0.1f,-1.0f, 0.1f)),
-      1.00f, 0.18f,
-      {0.55f,0.78f,0.92f}, 0.005f },
+    { {0.58f,0.70f,0.80f}, {1.00f,1.00f,0.97f},
+      glm::normalize(glm::vec3( 0.12f,-1.0f, 0.10f)),
+      1.00f, 0.12f,
+      {0.60f,0.68f,0.75f}, 0.004f },
     /* 2 — Evening */
-    { {0.80f,0.38f,0.15f}, {1.0f,0.62f,0.28f},
-      glm::normalize(glm::vec3( 0.9f,-0.2f,-0.4f)),
-      0.50f, 0.20f,
-      {0.70f,0.36f,0.18f}, 0.012f },
+    { {0.30f,0.33f,0.37f}, {1.00f,0.88f,0.76f},
+      glm::normalize(glm::vec3( 0.90f,-0.20f,-0.40f)),
+      0.28f, 0.055f,
+      {0.20f,0.22f,0.24f}, 0.0028f },
     /* 3 — Night */
-    { {0.04f,0.04f,0.12f}, {0.15f,0.18f,0.30f},
-      glm::normalize(glm::vec3( 0.0f,-1.0f, 0.0f)),
-      0.00f, 0.06f,
-      {0.04f,0.04f,0.10f}, 0.008f },
+    { {0.0f,0.0f,0.0f}, {1.0f,1.0f,1.0f},
+      glm::normalize(glm::vec3(0.0f,-1.0f,0.0f)),
+      0.00f, 0.0045f,
+      {0.0f,0.0f,0.0f}, 0.0007f },
 };
 
 static PeriodSky blendSky(int p, float frac) {
-    /* Blend from period p toward period (p+1)%4 over the fade zone */
-    float fadeFrac = std::min(frac * PERIOD_DUR / PERIOD_FADE, 1.0f);
+    /* Blend in the final PERIOD_FADE seconds of each period */
+    float fadeStart = 1.0f - (PERIOD_FADE / PERIOD_DUR);
+    float fadeFrac = 0.0f;
+    if (frac > fadeStart)
+        fadeFrac = std::min((frac - fadeStart) / (1.0f - fadeStart), 1.0f);
     const PeriodSky& A = PERIODS[p];
     const PeriodSky& B = PERIODS[(p+1) % NUM_PERIODS];
     float t = fadeFrac;
@@ -119,9 +122,11 @@ void render() {
 
     /* ── Light slot 0-4: building gimbal spotlights ──
        Strength scales with lightsOn so they fade in at evening. */
+    float isNight = (sky.sunStr < 0.03f) ? 1.0f : 0.0f;
+    float gimbalStrength = (1.0f - isNight) * lightsOn * 2.2f;
     for (int i = 0; i < NUM_B; i++) {
         setLight(i, spotPos[i], bldg[i].lightCol, spotDir[i],
-                 cosf(glm::radians(35.0f)), lightsOn * 2.5f);
+                 cosf(glm::radians(35.0f)), gimbalStrength);
     }
 
     /* ── Slots 5-6: car headlights ──
@@ -132,18 +137,21 @@ void render() {
         glm::vec3 fwd (sinf(carHeading), 0.0f, cosf(carHeading));
         glm::vec3 right(-cosf(carHeading), 0.0f, sinf(carHeading));
         /* Headlight mounts: front bumper corners, just above ground */
-        float hy    = WHL_R + CAR_BH * 0.4f;
-        float hz    = CAR_L * 0.52f;
+        float hy    = useChariot ? 0.68f : (WHL_R + CAR_BH * 0.4f);
+        float hz    = useChariot ? (CAR_L * 0.50f) : (CAR_L * 0.52f);
+        float hx    = useChariot ? (CAR_W * 0.44f) : (CAR_W * 0.35f);
         glm::vec3 hl[2] = {
-            carPos + fwd*hz + right*CAR_W*0.35f + glm::vec3(0,hy,0),
-            carPos + fwd*hz - right*CAR_W*0.35f + glm::vec3(0,hy,0),
+            carPos + fwd*hz + right*hx + glm::vec3(0,hy,0),
+            carPos + fwd*hz - right*hx + glm::vec3(0,hy,0),
         };
         /* Cone axis: forward and slightly downward so it hits the road */
-        glm::vec3 hlDir = glm::normalize(fwd * 1.0f + glm::vec3(0,-0.18f,0));
-        float hlStr = (headlightsOn) ? 6.0f : 0.0f;
+        glm::vec3 hlDir = glm::normalize(fwd + glm::vec3(0, useChariot ? -0.10f : -0.18f, 0));
+        float hlStr = (headlightsOn) ? (useChariot ? 4.3f : 6.0f) : 0.0f;
         /* Wide enough to illuminate the road ahead visibly */
-        float hlCut = cosf(glm::radians(22.0f));
-        glm::vec3 hlCol(1.0f, 0.97f, 0.85f);   /* warm white */
+        float hlCut = cosf(glm::radians(useChariot ? 26.0f : 22.0f));
+        glm::vec3 hlCol = useChariot
+                        ? glm::vec3(1.0f, 0.82f, 0.52f)
+                        : glm::vec3(1.0f, 0.97f, 0.85f);
         setLight(LIGHT_HEADLIGHT+0, hl[0], hlCol, hlDir, hlCut, hlStr);
         setLight(LIGHT_HEADLIGHT+1, hl[1], hlCol, hlDir, hlCut, hlStr);
     }
@@ -184,9 +192,8 @@ void render() {
     /* ══════════════════════════════════════════════
      *  COBBLESTONE GROUND DISK
      * ══════════════════════════════════════════════ */
-    setTexMaterial(texCobble, glm::vec2(6.0f,6.0f), {0.03f,0.03f,0.03f}, 4.0f);
-    /* Boost ambient at night so the floor isn't pitch black */
-    glUniform1f(uAmbi, sky.ambStr + lightsOn * 0.12f);
+    setTexMaterial(texCobble, glm::vec2(1.35f,1.35f), {0.03f,0.03f,0.03f}, 6.0f);
+    glUniform1f(uAmbi, sky.ambStr);
     setModel(top());
     mGround.draw();
     glUniform1i(uUseTex, 0);
@@ -195,27 +202,30 @@ void render() {
      *  GRASS — central island (inside inner track)
      * ══════════════════════════════════════════════ */
     {
-        setMaterial({0.22f,0.48f,0.14f},{0.02f,0.04f,0.01f},3.0f);
+        setTexMaterial(texGate, glm::vec2(0.40f,0.40f), {0.03f,0.03f,0.03f}, 5.0f);
         glUniform1f(uAmbi, sky.ambStr);
         glm::mat4 gm = glm::scale(top(), glm::vec3(
             (TRK_A_IN - ROAD_W*0.5f - 0.5f)/ARENA_R, 1.0f,
             (TRK_B_IN - ROAD_W*0.5f - 0.5f)/ARENA_R));
         gm = glm::translate(gm, glm::vec3(0,0.015f,0));
-        setModel(gm);
-        mGround.draw();
+        setModel(gm); mGround.draw();
+        glUniform1i(uUseTex, 0);
     }
 
     /* ══════════════════════════════════════════════
      *  OUTER ROAD + KERBS
      * ══════════════════════════════════════════════ */
     glUniform1f(uAmbi, sky.ambStr);
-    setMaterial({0.18f,0.17f,0.15f},{0.04f,0.04f,0.04f},6.0f);
+    setTexMaterial(texConcrete, glm::vec2(2.5f,1.0f), {0.04f,0.04f,0.04f},8.0f);
     setModel(top()); mRoad.draw();
+    glUniform1i(uUseTex, 0);
     auto drawKerb = [&](Mesh& m, float sX, float sZ) {
         glm::mat4 km = glm::scale(top(), glm::vec3(sX,1.0f,sZ));
         km = glm::translate(km, glm::vec3(0,0.005f,0));
-        setMaterial({0.88f,0.84f,0.76f},{0.05f,0.05f,0.05f},8.0f);
+        setTexMaterial(texStone, glm::vec2(0.6f,0.4f), {0.05f,0.05f,0.05f},8.0f);
+        glUniform1f(uAmbi, sky.ambStr);
         setModel(km); m.draw();
+        glUniform1i(uUseTex, 0);
     };
     drawKerb(mRoad, (TRK_A_OUT+ROAD_W*0.5f+0.2f)/TRK_A_OUT, (TRK_B_OUT+ROAD_W*0.5f+0.2f)/TRK_B_OUT);
     drawKerb(mRoad, (TRK_A_OUT-ROAD_W*0.5f-0.2f)/TRK_A_OUT, (TRK_B_OUT-ROAD_W*0.5f-0.2f)/TRK_B_OUT);
@@ -223,8 +233,10 @@ void render() {
     /* ══════════════════════════════════════════════
      *  INNER ROAD + KERBS
      * ══════════════════════════════════════════════ */
-    setMaterial({0.18f,0.17f,0.15f},{0.04f,0.04f,0.04f},6.0f);
+    setTexMaterial(texConcrete, glm::vec2(1.9f,0.8f), {0.04f,0.04f,0.04f},8.0f);
+    glUniform1f(uAmbi, sky.ambStr);
     setModel(top()); mRoadInner.draw();
+    glUniform1i(uUseTex, 0);
     drawKerb(mRoadInner, (TRK_A_IN+ROAD_W*0.5f+0.2f)/TRK_A_IN, (TRK_B_IN+ROAD_W*0.5f+0.2f)/TRK_B_IN);
     drawKerb(mRoadInner, (TRK_A_IN-ROAD_W*0.5f-0.2f)/TRK_A_IN, (TRK_B_IN-ROAD_W*0.5f-0.2f)/TRK_B_IN);
 
@@ -235,8 +247,10 @@ void render() {
         glm::mat4 sm = glm::scale(top(), glm::vec3(
             (COL_R_IN-0.8f)/TRK_A_OUT, 1.0f, (COL_R_IN-0.8f)/TRK_B_OUT));
         sm = glm::translate(sm, glm::vec3(0,-0.005f,0));
-        setMaterial({0.76f,0.66f,0.48f},{0.03f,0.03f,0.03f},3.0f);
+        setTexMaterial(texWood, glm::vec2(2.2f,1.2f), {0.03f,0.03f,0.03f},4.0f);
+        glUniform1f(uAmbi, sky.ambStr);
         setModel(sm); mRoad.draw();
+        glUniform1i(uUseTex, 0);
     }
 
     /* ══════════════════════════════════════════════
@@ -244,8 +258,8 @@ void render() {
      * ══════════════════════════════════════════════ */
     {
         static Mesh colMesh = createColosseum();
-        setTexMaterial(texStone, glm::vec2(1.0f,1.0f), {0.06f,0.05f,0.04f},12.0f);
-        glUniform1f(uAmbi, sky.ambStr + 0.05f);
+        setTexMaterial(texStone, glm::vec2(2.6f,1.4f), {0.06f,0.05f,0.04f},16.0f);
+        glUniform1f(uAmbi, sky.ambStr + 0.015f);
         setModel(top());
         colMesh.draw();
         glUniform1i(uUseTex, 0);
@@ -257,13 +271,14 @@ void render() {
     {
         const int NP = 24;
         glUniform1f(uAmbi, sky.ambStr);
-        setMaterial({0.72f,0.65f,0.50f},{0.06f,0.06f,0.05f},16.0f);
+        setTexMaterial(texStone, glm::vec2(0.55f,2.4f), {0.06f,0.06f,0.05f},12.0f);
         for (int i=0;i<NP;i++) {
             float t=2*(float)M_PI*i/NP;
             glm::mat4 pm=glm::translate(top(),glm::vec3(COL_R_IN*cosf(t),COL_H*0.5f,COL_R_IN*sinf(t)));
             pm=glm::scale(pm,glm::vec3(0.55f,COL_H,0.55f));
             setModel(pm); mCylinder.draw();
         }
+        glUniform1i(uUseTex, 0);
     }
 
     /* ══════════════════════════════════════════════
@@ -306,7 +321,7 @@ void render() {
      *  box arms, on a stone pedestal.
      * ══════════════════════════════════════════════ */
     {
-        glUniform1f(uAmbi, sky.ambStr + 0.08f);
+        glUniform1f(uAmbi, sky.ambStr + 0.015f);
         pushM(glm::translate(top(), glm::vec3(0,0,0)));
 
         /* Pedestal */
@@ -409,19 +424,24 @@ void render() {
 
             pushM(glm::translate(top(),glm::vec3(px,0,pz)));
 
-            /* Stone bracket pole */
-            setMaterial({0.55f,0.50f,0.40f},{0.04f,0.04f,0.04f},8.0f);
+            /* Textured wood pole */
+            setTexMaterial(texWood, glm::vec2(0.35f,1.8f), {0.04f,0.04f,0.04f},8.0f);
+            glUniform1f(uAmbi, sky.ambStr);
             {
                 glm::mat4 pm=glm::translate(top(),glm::vec3(0,COL_H+TORCH_H*0.5f,0));
                 pm=glm::scale(pm,glm::vec3(0.08f,TORCH_H,0.08f));
                 setModel(pm); mCylinder.draw();
             }
+            glUniform1i(uUseTex, 0);
             /* Bowl */
+            setTexMaterial(texStone, glm::vec2(0.55f,0.30f), {0.05f,0.05f,0.05f},8.0f);
+            glUniform1f(uAmbi, sky.ambStr);
             {
                 glm::mat4 bm=glm::translate(top(),glm::vec3(0,COL_H+TORCH_H,0));
                 bm=glm::scale(bm,glm::vec3(0.22f,0.08f,0.22f));
                 setModel(bm); mCylinder.draw();
             }
+            glUniform1i(uUseTex, 0);
 
             /* Flame — emissive, scales with lightsOn and flicker */
             float fr = FLAME_R * (0.4f + 0.6f*lightsOn) * flicker;
@@ -442,6 +462,20 @@ void render() {
                 setModel(fm2); mSphere.draw();
             }
 
+            /* Textured flame billboards (crossed) */
+            setTexMaterial(texTorch, glm::vec2(0.22f,0.22f), {0.0f,0.0f,0.0f}, 2.0f);
+            glUniform1f(uAmbi, 0.01f);
+            glm::vec3 billEmit = glm::vec3(1.4f,0.75f,0.25f) * lightsOn * flicker;
+            glUniform3fv(uEmissive, 1, glm::value_ptr(billEmit));
+            for (int q = 0; q < 2; q++) {
+                glm::mat4 fb=glm::translate(top(),glm::vec3(0,COL_H+TORCH_H+fr*1.5f,0));
+                fb=glm::rotate(fb,glm::radians(90.0f*(float)q + (float)((ti*17)%45)),glm::vec3(0,1,0));
+                fb=glm::scale(fb,glm::vec3(fr*0.18f, fr*3.3f, fr*1.9f));
+                setModel(fb); mBox.draw();
+            }
+            glUniform1i(uUseTex, 0);
+            glUniform3fv(uEmissive, 1, glm::value_ptr(glm::vec3(0.0f)));
+
             popM();
         }
     }
@@ -456,7 +490,8 @@ void render() {
         pushM(glm::translate(top(), B.pos));
 
         GLuint tex=(B.texType==0)?texBrick:(B.texType==1)?texWood:texConcrete;
-        setTexMaterial(tex, glm::vec2(B_HALF,bldgH*0.5f), {0.06f,0.06f,0.06f},10.0f);
+        setTexMaterial(tex, glm::vec2(0.50f, bldgH*0.26f), {0.06f,0.06f,0.06f},14.0f);
+        glUniform1f(uAmbi, sky.ambStr + 0.01f);
         {
             glm::mat4 body=glm::translate(top(),glm::vec3(0,bldgH*0.5f,0));
             body=glm::scale(body,glm::vec3(B_HALF*2,bldgH,B_HALF*2));
@@ -465,12 +500,61 @@ void render() {
         glUniform1i(uUseTex,0);
 
         /* Pitched roof */
-        setMaterial({0.52f,0.32f,0.22f},{0.04f,0.04f,0.04f},6.0f);
+        setTexMaterial(texGate, glm::vec2(0.65f,0.35f), {0.04f,0.04f,0.04f},8.0f);
+        glUniform1f(uAmbi, sky.ambStr);
         for (float side:{-1.0f,1.0f}) {
             glm::mat4 roof=glm::translate(top(),glm::vec3(side*B_HALF*0.5f,bldgH+0.3f,0));
             roof=glm::rotate(roof,side*glm::radians(35.0f),glm::vec3(0,0,1));
             roof=glm::scale(roof,glm::vec3(B_HALF,0.12f,B_HALF*2.1f));
             setModel(roof); mBox.draw();
+        }
+        glUniform1i(uUseTex, 0);
+
+        /* Window panes: outward-facing, deterministic random night glow */
+        {
+            const glm::vec3 sideN[4] = {
+                glm::vec3( 1,0,0), glm::vec3(-1,0,0),
+                glm::vec3( 0,0,1), glm::vec3( 0,0,-1)
+            };
+            const glm::vec3 sideT[4] = {
+                glm::vec3(0,0, 1), glm::vec3(0,0,-1),
+                glm::vec3(-1,0,0), glm::vec3(1,0, 0)
+            };
+
+            for (int s=0; s<4; s++) {
+                for (int floor=0; floor<B.stories; floor++) {
+                    float wy = 1.05f + floor * STORY_H;
+                    for (int col=0; col<2; col++) {
+                        float sideShift = (col==0 ? -0.46f : 0.46f) * (B_HALF*1.35f);
+                        bool baseLit = ((s + floor + col + bi) % 2) == 0;
+                        bool extraLit = rnd(bi*31 + s*7 + floor*13 + col*19, 11) > 0.80f;
+                        float litMask = (baseLit || extraLit) ? 1.0f : 0.0f;
+
+                        glm::vec3 center = sideN[s] * (B_HALF + 0.03f)
+                                         + sideT[s] * sideShift
+                                         + glm::vec3(0,wy,0);
+                        glm::vec3 paneEmit = glm::vec3(2.25f,1.95f,1.55f) * lightsOn * litMask;
+                        glm::vec3 paneCol  = glm::mix(glm::vec3(0.07f,0.10f,0.14f),
+                                                      glm::vec3(0.96f,0.84f,0.56f),
+                                                      lightsOn * litMask);
+                        setMaterial(paneCol, {0.02f,0.02f,0.02f}, 18.0f, sky.ambStr, paneEmit);
+                        glm::mat4 wp = glm::translate(top(), center);
+                        if (fabsf(sideN[s].x) > 0.5f)
+                            wp = glm::scale(wp, glm::vec3(0.032f, 0.62f, 0.38f));
+                        else
+                            wp = glm::scale(wp, glm::vec3(0.38f, 0.62f, 0.032f));
+                        setModel(wp); mBox.draw();
+
+                        setMaterial({0.33f,0.30f,0.22f}, {0.03f,0.03f,0.03f}, 10.0f, sky.ambStr);
+                        glm::mat4 frame = glm::translate(top(), center - sideN[s]*0.012f);
+                        if (fabsf(sideN[s].x) > 0.5f)
+                            frame = glm::scale(frame, glm::vec3(0.026f, 0.72f, 0.48f));
+                        else
+                            frame = glm::scale(frame, glm::vec3(0.48f, 0.72f, 0.026f));
+                        setModel(frame); mBox.draw();
+                    }
+                }
+            }
         }
 
         /* Fan */
@@ -519,7 +603,8 @@ void render() {
             }
 
             /* Bulb: emissive only when lights are on */
-            glm::vec3 bulbEmit = B.lightCol * 2.0f * lightsOn;
+            float bulbOn = std::clamp(gimbalStrength / 2.2f, 0.0f, 1.0f);
+            glm::vec3 bulbEmit = B.lightCol * 2.0f * bulbOn;
             setMaterial(B.lightCol,{0,0,0},1.0f,1.0f, bulbEmit);
             {
                 glm::mat4 bulb=glm::translate(top(),glm::vec3(0,0,LT_ARM));
@@ -539,6 +624,7 @@ void render() {
         glm::mat4 carBase=glm::translate(top(),carPos);
         carBase=glm::rotate(carBase,carHeading,glm::vec3(0,1,0));
         pushM(carBase);
+        if (!useChariot) {
 
         /* Body — metallic red */
         glm::vec3 carRed(0.72f, 0.06f, 0.06f);
@@ -608,6 +694,84 @@ void render() {
             glm::mat4 hb=glm::translate(top(),glm::vec3(wx[i],WHL_R,wz[j]));
             hb=glm::scale(hb,glm::vec3(WHL_R*1.2f,WHL_W*1.05f,WHL_R*1.2f));
             setModel(hb); mSphere.draw();
+        }
+        } else {
+            const float CH_WID = CAR_W * 1.35f;
+            const float CH_LEN = CAR_L * 1.20f;
+            const float CH_H   = 0.34f;
+            const float CH_WR  = WHL_R * 1.65f;
+            const float CH_WW  = WHL_W * 0.78f;
+
+            setTexMaterial(texWood, glm::vec2(0.95f,0.60f), {0.10f,0.10f,0.10f}, 12.0f);
+            glUniform1f(uAmbi, sky.ambStr + 0.01f);
+            {
+                glm::mat4 base=glm::translate(top(),glm::vec3(0,CH_WR + CH_H*0.5f,0));
+                base=glm::scale(base,glm::vec3(CH_WID,CH_H,CH_LEN));
+                setModel(base); mBox.draw();
+            }
+
+            setTexMaterial(texGate, glm::vec2(0.60f,0.30f), {0.08f,0.08f,0.08f}, 10.0f);
+            glUniform1f(uAmbi, sky.ambStr);
+            for (float sx : {-1.0f,1.0f}) {
+                glm::mat4 rail=glm::translate(top(),glm::vec3(sx*CH_WID*0.44f,CH_WR+0.38f,-0.10f));
+                rail=glm::scale(rail,glm::vec3(0.08f,0.28f,CH_LEN*0.92f));
+                setModel(rail); mBox.draw();
+            }
+            {
+                glm::mat4 front=glm::translate(top(),glm::vec3(0,CH_WR+0.34f,CH_LEN*0.40f));
+                front=glm::scale(front,glm::vec3(CH_WID*0.72f,0.22f,0.07f));
+                setModel(front); mBox.draw();
+            }
+            {
+                glm::mat4 back=glm::translate(top(),glm::vec3(0,CH_WR+0.42f,-CH_LEN*0.38f));
+                back=glm::scale(back,glm::vec3(CH_WID*0.72f,0.32f,0.07f));
+                setModel(back); mBox.draw();
+            }
+            glUniform1i(uUseTex, 0);
+
+            setMaterial({0.40f,0.27f,0.14f}, {0.12f,0.10f,0.08f}, 14.0f, sky.ambStr);
+            {
+                glm::mat4 yoke=glm::translate(top(),glm::vec3(0,CH_WR+0.14f,CH_LEN*0.82f));
+                yoke=glm::scale(yoke,glm::vec3(0.16f,0.07f,CH_LEN*1.15f));
+                setModel(yoke); mBox.draw();
+            }
+
+            setTexMaterial(texWood, glm::vec2(0.55f,0.55f), {0.10f,0.10f,0.10f}, 12.0f);
+            glUniform1f(uAmbi, sky.ambStr);
+            for (float sx : {-1.0f,1.0f}) {
+                glm::mat4 wm=glm::translate(top(),glm::vec3(sx*CH_WID*0.58f,CH_WR,-CH_LEN*0.10f));
+                wm=glm::rotate(wm,(float)M_PI*0.5f,glm::vec3(0,0,1));
+                wm=glm::rotate(wm,wheelRot,glm::vec3(0,1,0));
+                wm=glm::scale(wm,glm::vec3(CH_WR*2,CH_WW,CH_WR*2));
+                setModel(wm); mCylinder.draw();
+
+                glm::mat4 hub=glm::translate(top(),glm::vec3(sx*CH_WID*0.58f,CH_WR,-CH_LEN*0.10f));
+                hub=glm::scale(hub,glm::vec3(CH_WR*0.55f,CH_WW*1.2f,CH_WR*0.55f));
+                setModel(hub); mSphere.draw();
+            }
+            glUniform1i(uUseTex, 0);
+
+            setMaterial({0.62f,0.58f,0.52f},{0.70f,0.70f,0.70f},72.0f, sky.ambStr);
+            for (float sx : {-1.0f,1.0f}) {
+                for (int sp=0; sp<6; sp++) {
+                    glm::mat4 spoke=glm::translate(top(),glm::vec3(sx*CH_WID*0.58f,CH_WR,-CH_LEN*0.10f));
+                    spoke=glm::rotate(spoke,glm::radians(60.0f*sp) + wheelRot,glm::vec3(1,0,0));
+                    spoke=glm::rotate(spoke,glm::radians(90.0f),glm::vec3(0,0,1));
+                    spoke=glm::translate(spoke,glm::vec3(0,CH_WR*0.34f,0));
+                    spoke=glm::scale(spoke,glm::vec3(0.045f,CH_WR*0.68f,0.030f));
+                    setModel(spoke); mBox.draw();
+                }
+            }
+
+            glm::vec3 lanternEmit = headlightsOn
+                                  ? glm::vec3(1.25f,0.95f,0.60f)
+                                  : glm::vec3(0.03f,0.02f,0.01f);
+            setMaterial({0.98f,0.80f,0.50f},{0,0,0},1.0f,1.0f,lanternEmit);
+            for (float sx : {-1.0f,1.0f}) {
+                glm::mat4 lan=glm::translate(top(),glm::vec3(sx*CH_WID*0.33f,CH_WR+0.46f,CH_LEN*0.52f));
+                lan=glm::scale(lan,glm::vec3(0.12f,0.18f,0.12f));
+                setModel(lan); mBox.draw();
+            }
         }
 
         popM(); /* car */

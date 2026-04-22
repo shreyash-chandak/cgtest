@@ -37,17 +37,18 @@ void getCamera(glm::mat4& viewOut, glm::vec3& eyeOut) {
         /* ── 0: Sky view — top-down, centred on arena ── */
         default:
         case 0:
-            eye  = glm::vec3(0.0f, 50.0f, 0.0f);
+            eye  = glm::vec3(0.0f, 37.0f, 6.5f);
             view = glm::lookAt(eye,
                                glm::vec3(0.0f, 0.0f, 0.0f),
-                               glm::vec3(0.0f, 0.0f, -1.0f));
+                               glm::vec3(0.0f, 1.0f, 0.0f));
             break;
 
         /* ── 1: Car view — roof-mounted, looks forward ── */
         case 1: {
-            float roofY = WHL_R + CAR_BH + CAR_CH + 0.15f;
-            eye  = carPos + glm::vec3(0.0f, roofY, 0.0f) + fwd * 0.3f;
-            view = glm::lookAt(eye, eye + fwd, glm::vec3(0.0f, 1.0f, 0.0f));
+            float roofY = useChariot ? 1.45f : (WHL_R + CAR_BH + CAR_CH + 0.12f);
+            eye  = carPos + glm::vec3(0.0f, roofY, 0.0f) - fwd * (useChariot ? 0.62f : 0.46f);
+            glm::vec3 target = carPos + fwd * 6.2f + glm::vec3(0.0f, useChariot ? 0.55f : 0.45f, 0.0f);
+            view = glm::lookAt(eye, target, glm::vec3(0.0f, 1.0f, 0.0f));
             break;
         }
 
@@ -77,9 +78,6 @@ void getCamera(glm::mat4& viewOut, glm::vec3& eyeOut) {
                This is always perpendicular to spotDir regardless of pitch,
                so lookAt never degenerates. */
 
-            eye = spotPos[0];
-
-            /* Local up = column 1 of the gimbal rotation (world-space Y of gimbal) */
             glm::vec3 gimbalUp = glm::normalize(glm::vec3(spotGimbalMat[0][1]));
 
             /* Safety: if gimbalUp is somehow nearly parallel to spotDir
@@ -87,7 +85,13 @@ void getCamera(glm::mat4& viewOut, glm::vec3& eyeOut) {
             if (fabsf(glm::dot(gimbalUp, spotDir[0])) > 0.99f)
                 gimbalUp = glm::vec3(0.0f, 1.0f, 0.0f);
 
-            view = glm::lookAt(eye, eye + spotDir[0], gimbalUp);
+            eye = spotPos[0] + gimbalUp * 0.38f;
+            glm::vec3 lookDir = glm::normalize(gimbalUp);
+            glm::vec3 camUp   = glm::normalize(-spotDir[0]);
+            if (fabsf(glm::dot(lookDir, camUp)) > 0.98f)
+                camUp = glm::vec3(0.0f, 1.0f, 0.0f);
+
+            view = glm::lookAt(eye, eye + lookDir, camUp);
             break;
         }
 

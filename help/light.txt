@@ -1,0 +1,19 @@
+In a natural cycle, light intensity doesn't follow a smooth curve; it remains relatively high throughout the day and drops off precipitously during the "Blue Hour" as the sun dips below the horizon.## 1. Sun Geometry (The Trajectory)Instead of a simple 2D orbit, define the sun’s position using a spherical coordinate system. This allows you to calculate the light direction vector ($\vec{L}$) based on an elevation angle ($\theta$).Elevation ($\theta$): $0^\circ$ at sunrise, $90^\circ$ at noon, $180^\circ$ at sunset.Vector Calculation:$$\vec{L}_{direction} = \text{normalize}(\cos(\theta), \sin(\theta), \phi)$$(Where $\phi$ is a slight offset to keep the sun from being perfectly centered).## 2. The Luminance Curve (Intensity)To avoid the "faded" look of a sine wave, use a Power Function or Smoothstep to determine the sun’s brightness ($I$). This ensures the world stays bright for most of the day but plunges into darkness quickly at dusk.$$I_{sun} = \text{clamp}\left(\frac{\sin(\theta)}{\alpha}, 0.0, 1.0\right)^\gamma$$$\alpha$ (Falloff Start): Controls how close to the horizon the light starts dimming.$\gamma$ (Sharpness): A value of $0.5$ to $0.8$ keeps it bright longer; a value $> 1.0$ makes the transition to "pitch black" feel more sudden and realistic.## 3. Natural Color RampingInstead of shifting from Red to Blue, focus on Saturation and Exposure. Natural night isn't blue; it is the absence of light.Time StateSun Intensity (Isun​)Ambient Light (Iamb​)Sky/Clear ColorMorning0.8 (Neutral White)0.2 (Soft Grey)Light Blue / GreyNoon1.0 (Bright White)0.3 (Bright White)Deep BlueDusk0.4 (Warm Amber)0.1 (Deep Indigo)Dark Purple / GreyNight0.0 (None)0.01 (Near Black)Pitch Black (0, 0, 0)## 4. GLSL Implementation LogicIn your fragment shader, apply the light intensity to both the Diffuse and Ambient components. To satisfy the assignment requirement for "pitch dark", the ambient term must approach zero.C++// Inside Fragment Shader
+uniform vec3 sunColor;
+uniform float sunIntensity; // Derived from the Power Function above
+uniform float ambientStrength; 
+
+void main() {
+    // 1. Calculate Diffuse
+    float diff = max(dot(norm, lightDir), 0.0);
+    vec3 diffuse = diff * sunColor * sunIntensity;
+
+    // 2. Calculate Ambient (Natural dimming)
+    // As sunIntensity hits 0, the world goes pitch black
+    vec3 ambient = ambientStrength * sunIntensity * vec3(1.0, 1.0, 1.0); 
+
+    // 3. Final Color
+    vec3 result = (ambient + diffuse) * objectColor;
+    FragColor = vec4(result, 1.0);
+}
+## 5. Atmospheric Tips for the ColosseumThe "Sun" Light Source: Ensure it is a Directional Light so shadows on the medieval buildings remain parallel.Pitch Black State: When sunIntensity reaches $0.0$, only your building "gimble" lights should be visible. This creates a high-contrast, atmospheric scene where the chariot is only illuminated by the colored building lights as it passes them.

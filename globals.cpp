@@ -23,14 +23,14 @@ GLint uFogCol, uFogDen;
 
 Mesh mBox, mCylinder, mSphere, mRoad, mRoadInner, mGround;
 
-GLuint texBrick=0, texWood=0, texConcrete=0, texStone=0, texCobble=0;
+GLuint texBrick=0, texWood=0, texConcrete=0, texStone=0, texCobble=0, texTorch=0, texGate=0;
 
 BuildingInfo bldg[NUM_B] = {
-    { { 0.0f, 0,  0.0f}, 3, 0, {1.0f,0.55f,0.10f}, {},{},0.0f },
-    { {-5.5f, 0, -4.0f}, 2, 1, {0.3f,0.8f, 1.0f }, {},{},0.0f },
-    { { 5.5f, 0, -4.0f}, 2, 2, {0.8f,0.25f,0.25f}, {},{},0.0f },
-    { {-5.0f, 0,  5.0f}, 1, 0, {0.3f,1.0f, 0.45f}, {},{},0.0f },
-    { { 5.0f, 0,  5.0f}, 1, 1, {0.9f,0.9f, 0.2f }, {},{},0.0f },
+    { {-3.6f, 0, -1.4f}, 3, 0, {1.0f,0.55f,0.10f}, {},{},0.0f },
+    { { 4.2f, 0, -2.0f}, 2, 1, {0.3f,0.8f, 1.0f }, {},{},0.0f },
+    { {-2.9f, 0,  3.8f}, 2, 2, {0.8f,0.25f,0.25f}, {},{},0.0f },
+    { { 3.4f, 0,  3.2f}, 1, 0, {0.3f,1.0f, 0.45f}, {},{},0.0f },
+    { { 0.6f, 0, -4.4f}, 1, 1, {0.9f,0.9f, 0.2f }, {},{},0.0f },
 };
 
 glm::vec3 carPos;
@@ -39,6 +39,7 @@ float     carSpeed    = 0.0f;
 bool      carFrozen   = false;
 float     wheelRot    = 0.0f;
 bool      headlightsOn= true;
+bool      useChariot  = false;
 
 float fanAngle   = 0.0f;
 float fanSpeed   = FAN_BSPD;

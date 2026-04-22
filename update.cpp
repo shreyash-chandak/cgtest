@@ -32,18 +32,20 @@ void update(float dt) {
     todPeriod   = (int)(cycle / PERIOD_DUR) % NUM_PERIODS;
     todFrac     = fmodf(cycle, PERIOD_DUR) / PERIOD_DUR;  /* 0..1 within period */
 
-    /* Compute lightsOn: smoothly transition at evening (period 2) start
-       and back to off at early morning (period 0) start. */
-    /* Periods 2 and 3 = lights on */
-    float targetLights = (todPeriod >= 2) ? 1.0f : 0.0f;
-    /* During the fade zone at the start of a period, interpolate */
-    float fadeFrac = std::min(todFrac * PERIOD_DUR / PERIOD_FADE, 1.0f);
-    if (todPeriod == 2 && fadeFrac < 1.0f)
-        lightsOn = fadeFrac;             /* fading ON  as evening begins */
-    else if (todPeriod == 0 && fadeFrac < 1.0f)
-        lightsOn = 1.0f - fadeFrac;     /* fading OFF as morning begins */
-    else
-        lightsOn = targetLights;
+    /* Fade lights near the *end* of evening/night, not at period start. */
+    float periodTime = todFrac * PERIOD_DUR;
+    float fadeStart  = PERIOD_DUR - PERIOD_FADE;
+    if (todPeriod == 2) {
+        lightsOn = (periodTime >= fadeStart)
+                 ? std::min((periodTime - fadeStart) / PERIOD_FADE, 1.0f)
+                 : 0.0f;
+    } else if (todPeriod == 3) {
+        lightsOn = (periodTime >= fadeStart)
+                 ? std::max(1.0f - (periodTime - fadeStart) / PERIOD_FADE, 0.0f)
+                 : 1.0f;
+    } else {
+        lightsOn = 0.0f;
+    }
 
     /* ── Fan rotation ── */
     fanAngle += glm::radians(fanSpeed) * eff;

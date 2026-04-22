@@ -51,7 +51,8 @@ void main(){
     float diff=max(dot(N,L),0.0);
     vec3 H=normalize(L+V);
     float spec=pow(max(dot(N,H),0.0),shininess);
-    vec3 res=ambientStrength*base*sunColor + sunStrength*diff*base*sunColor + sunStrength*spec*specularColor*sunColor;
+    float amb=ambientStrength*sunStrength;
+    vec3 res=amb*base*sunColor + sunStrength*diff*base*sunColor + sunStrength*spec*specularColor*sunColor;
     for(int i=0;i<numLights&&i<MAX_LIGHTS;i++){
         vec3 fl=lightPos[i]-FragPos; float d=length(fl); vec3 ld=fl/d;
         float at=1.0/(1.0+0.09*d+0.032*d*d);

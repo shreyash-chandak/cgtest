@@ -30,7 +30,7 @@ extern GLint uFogCol, uFogDen;
 extern Mesh mBox, mCylinder, mSphere, mRoad, mRoadInner, mGround;
 
 /* ── Textures ── */
-extern GLuint texBrick, texWood, texConcrete, texStone, texCobble;
+extern GLuint texBrick, texWood, texConcrete, texStone, texCobble, texTorch, texGate;
 
 /* ── Building data ── */
 extern BuildingInfo bldg[NUM_B];
@@ -42,6 +42,7 @@ extern float     carSpeed;
 extern bool      carFrozen;
 extern float     wheelRot;
 extern bool      headlightsOn;          /* NEW: toggleable headlights */
+extern bool      useChariot;            /* false = sports car, true = chariot */
 
 /* ── Animation state ── */
 extern float fanAngle;
