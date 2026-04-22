@@ -64,6 +64,13 @@ extern glm::vec3 torchWorldPos[NUM_TORCH];
 /* ── Camera ── */
 extern int   camMode;
 extern float gndSwivel;
+extern glm::vec2 freeCamCenterXZ;
+extern float     freeCamZoom;
+extern float     freeCamYawDeg;
+extern float     freeCamPitchDeg;
+extern bool      freeCamDragging;
+extern double    freeCamLastX;
+extern double    freeCamLastY;
 
 /* ── Bonus ── */
 extern bool bulletTime;

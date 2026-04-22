@@ -67,10 +67,15 @@ void update(float dt) {
     /* ── Building gimbal lights ── */
     for (int i = 0; i < NUM_B; i++) {
         float bldgH = bldg[i].stories * STORY_H;
-        glm::vec3 mount = bldg[i].pos + glm::vec3(0.0f, bldgH + 0.3f, 0.0f);
+        glm::vec3 sideDir = glm::cross(glm::vec3(0,1,0), bldg[i].toRoad);
+        if (glm::length(sideDir) < 0.001f) sideDir = glm::vec3(1,0,0);
+        sideDir = glm::normalize(sideDir);
+        glm::vec3 mount = bldg[i].pos
+                        + sideDir * (B_HALF + 0.85f)
+                        + glm::vec3(0.0f, bldgH + 0.85f, 0.0f);
         float baseYaw   = bldg[i].roadYaw;
         float swing     = glm::radians(SW_MAX) * sinf(globalTime * SW_SPD + (float)i);
-        float pitch     = glm::radians(78.0f); /* steep down-tilt toward floor */
+        float pitch     = glm::radians(40.0f); /* down-tilt so beam reaches road */
 
         glm::mat4 M(1.0f);
         M = glm::translate(M, mount);
@@ -78,7 +83,6 @@ void update(float dt) {
         M = glm::rotate(M, pitch,           glm::vec3(1,0,0));
         spotGimbalMat[i] = M;
         spotPos[i] = glm::vec3(M * glm::vec4(0,0,LT_ARM,1));
-        glm::vec3 nearestGround(spotPos[i].x, 0.03f, spotPos[i].z);
-        spotDir[i] = glm::normalize(nearestGround - spotPos[i]);
+        spotDir[i] = glm::normalize(glm::vec3(M * glm::vec4(0,0,1,0)));
     }
 }

@@ -31,6 +31,16 @@
 #include <algorithm>
 #include <cmath>
 
+static constexpr float FREE_CAM_YAW_SENS   = 0.22f;
+static constexpr float FREE_CAM_PITCH_SENS = 0.18f;
+
+static void clampFreeCamAngles() {
+    freeCamPitchDeg = std::clamp(freeCamPitchDeg, 18.0f, 85.0f);
+    if (freeCamYawDeg > 360.0f || freeCamYawDeg < -360.0f) {
+        freeCamYawDeg = fmodf(freeCamYawDeg, 360.0f);
+    }
+}
+
 /* ── Update window title to reflect cheat buffer ── */
 static void updateTitle(GLFWwindow* w) {
     if (cheatMode) {
@@ -115,6 +125,7 @@ void keyCallback(GLFWwindow* w, int key, int /*sc*/, int action, int mods) {
             case GLFW_KEY_3: camMode = 2; break;
             case GLFW_KEY_4: camMode = 3; break;
             case GLFW_KEY_5: camMode = 4; break;
+            case GLFW_KEY_6: camMode = 5; break;
             default: break;
         }
         return;
@@ -188,6 +199,7 @@ void keyCallback(GLFWwindow* w, int key, int /*sc*/, int action, int mods) {
         case GLFW_KEY_3: camMode = 2; break;
         case GLFW_KEY_4: camMode = 3; break;
         case GLFW_KEY_5: camMode = 4; break;
+        case GLFW_KEY_6: camMode = 5; break;
 
         /* ── Bullet time ── */
         case GLFW_KEY_B:
@@ -229,4 +241,42 @@ void framebufferCB(GLFWwindow*, int w, int h) {
     WIN_W = w;
     WIN_H = h;
     glViewport(0, 0, w, h);
+}
+
+void mouseButtonCB(GLFWwindow* w, int button, int action, int /*mods*/) {
+    if (camMode != 5 || button != GLFW_MOUSE_BUTTON_LEFT) return;
+    if (action == GLFW_PRESS) {
+        freeCamDragging = true;
+        glfwGetCursorPos(w, &freeCamLastX, &freeCamLastY);
+    } else if (action == GLFW_RELEASE) {
+        freeCamDragging = false;
+    }
+}
+
+void cursorPosCB(GLFWwindow*, double x, double y) {
+    if (camMode != 5) {
+        freeCamLastX = x;
+        freeCamLastY = y;
+        return;
+    }
+
+    if (freeCamDragging) {
+        float dx = (float)(x - freeCamLastX);
+        float dy = (float)(y - freeCamLastY);
+
+        /* Orbit camera around arena center:
+           drag right -> arena appears to turn left. */
+        freeCamYawDeg   += dx * FREE_CAM_YAW_SENS;
+        freeCamPitchDeg -= dy * FREE_CAM_PITCH_SENS;
+        clampFreeCamAngles();
+    }
+
+    freeCamLastX = x;
+    freeCamLastY = y;
+}
+
+void scrollCB(GLFWwindow*, double /*xoff*/, double yoff) {
+    if (camMode != 5) return;
+    freeCamZoom -= (float)yoff * 2.5f;
+    freeCamZoom = std::clamp(freeCamZoom, FREE_CAM_MIN_ZOOM, FREE_CAM_MAX_ZOOM);
 }

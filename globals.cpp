@@ -60,6 +60,13 @@ glm::vec3 torchWorldPos[NUM_TORCH];
 
 int   camMode    = 0;
 float gndSwivel  = 0.0f;
+glm::vec2 freeCamCenterXZ(0.0f, 0.0f);
+float     freeCamZoom     = 50.0f;
+float     freeCamYawDeg   = 45.0f;
+float     freeCamPitchDeg = 50.0f;
+bool      freeCamDragging = false;
+double    freeCamLastX    = 0.0;
+double    freeCamLastY    = 0.0;
 
 bool bulletTime  = false;
 

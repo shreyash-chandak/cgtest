@@ -20,7 +20,7 @@ static const int   COL_SEG   = 64;
 static const float TRK_A_OUT = 22.0f;
 static const float TRK_B_OUT = 17.0f;
 static const float TRK_A_IN  =  9.0f;
-static const float TRK_B_IN  =  6.5f;
+static const float TRK_B_IN  =  9.0f;
 static const float ROAD_W    =  3.5f;
 static const int   TRK_SEG   = 128;
 
@@ -91,6 +91,10 @@ static const float CAM_NEAR = 0.1f;
 static const float CAM_FAR  = 300.0f;
 static const float CAM_FOV  = 60.0f;
 static const float GND_SWIV = 30.0f;
+static const float FREE_CAM_MIN_ZOOM = 18.0f;
+static const float FREE_CAM_MAX_ZOOM = 95.0f;
+static const float FREE_CAM_MAX_RAD  = COL_R_OUT + 8.0f;
+static const float FREE_CAM_PAN_SENS = 0.03f;
 
 /* ── Bonus ── */
 static const float BULLET_F = 0.1f;

@@ -48,6 +48,9 @@ int main() {
     glfwSetKeyCallback(win, keyCallback);
     glfwSetCharCallback(win, charCallback);
     glfwSetFramebufferSizeCallback(win, framebufferCB);
+    glfwSetCursorPosCallback(win, cursorPosCB);
+    glfwSetMouseButtonCallback(win, mouseButtonCB);
+    glfwSetScrollCallback(win, scrollCB);
     glfwSwapInterval(1);    /* vsync */
 
     /* ── GLEW init ── */

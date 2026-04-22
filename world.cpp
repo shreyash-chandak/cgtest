@@ -108,9 +108,9 @@ bool initGL() {
 }
 
 void resetWorld() {
-    /* Place car on the outer track at angle 0 (rightmost point), heading tangentially */
-    carPos     = glm::vec3(TRK_A_OUT, 0.0f, 0.0f);
-    carHeading = -(float)M_PI / 2.0f;   /* face inward toward the buildings */
+    /* Spawn at arena center (old statue position) */
+    carPos     = glm::vec3(0.0f, 0.0f, 0.0f);
+    carHeading = 0.0f;
     carSpeed   = 0.0f;
     carFrozen  = false;
     wheelRot   = 0.0f;
@@ -120,6 +120,13 @@ void resetWorld() {
     globalTime = 0.0f;
     camMode    = 0;
     gndSwivel  = 0.0f;
+    freeCamCenterXZ = glm::vec2(0.0f, 0.0f);
+    freeCamZoom     = 50.0f;
+    freeCamYawDeg   = 45.0f;
+    freeCamPitchDeg = 50.0f;
+    freeCamDragging = false;
+    freeCamLastX    = 0.0;
+    freeCamLastY    = 0.0;
     bulletTime      = false;
     useChariot      = false;
     cheatMode       = false;

@@ -348,99 +348,20 @@ void render() {
     //     popM();
     // }
 
-    /* ══════════════════════════════════════════════
-     *  CENTRAL STATUE (replaces the "green bush")
-     *  A warrior figure: cylinder body, sphere head,
-     *  box arms, on a stone pedestal.
-     * ══════════════════════════════════════════════ */
+    /* ================================================
+     *  CENTER SPAWN MARKER (replaces statue)
+     * ================================================ */
     {
-        glUniform1f(uAmbi, sky.ambStr + 0.015f);
-        pushM(glm::translate(top(), glm::vec3(0,0,0)));
+        glUniform1f(uAmbi, sky.ambStr + 0.02f);
+        setMaterial({0.22f,0.46f,0.86f}, {0.10f,0.18f,0.35f}, 30.0f, sky.ambStr);
+        glm::mat4 outer = glm::translate(top(), glm::vec3(0.0f, 0.03f, 0.0f));
+        outer = glm::scale(outer, glm::vec3(2.3f, 0.05f, 2.3f));
+        setModel(outer); mCylinder.draw();
 
-        /* Pedestal */
-        setMaterial({0.68f,0.62f,0.52f},{0.08f,0.08f,0.07f},20.0f);
-        {
-            glm::mat4 ped=glm::translate(top(),glm::vec3(0,0.4f,0));
-            ped=glm::scale(ped,glm::vec3(0.9f,0.8f,0.9f));
-            setModel(ped); mBox.draw();
-        }
-        /* Steps */
-        {
-            glm::mat4 st=glm::translate(top(),glm::vec3(0,0.05f,0));
-            st=glm::scale(st,glm::vec3(1.3f,0.1f,1.3f));
-            setModel(st); mBox.draw();
-        }
-
-        /* Bronze figure — warm metallic green patina */
-        glm::vec3 bronzeCol(0.35f,0.60f,0.42f);
-        glm::vec3 bronzeSpec(0.55f,0.80f,0.60f);
-        setMaterial(bronzeCol, bronzeSpec, 80.0f);
-
-        /* Torso */
-        {
-            glm::mat4 tor=glm::translate(top(),glm::vec3(0,1.6f,0));
-            tor=glm::scale(tor,glm::vec3(0.42f,0.65f,0.30f));
-            setModel(tor); mBox.draw();
-        }
-        /* Head */
-        {
-            glm::mat4 hd=glm::translate(top(),glm::vec3(0,2.18f,0));
-            hd=glm::scale(hd,glm::vec3(0.32f));
-            setModel(hd); mSphere.draw();
-        }
-        /* Helmet crest (thin box on top of head) */
-        setMaterial({0.65f,0.20f,0.10f},{0.40f,0.15f,0.08f},40.0f);
-        {
-            glm::mat4 crest=glm::translate(top(),glm::vec3(0,2.40f,0));
-            crest=glm::scale(crest,glm::vec3(0.06f,0.25f,0.28f));
-            setModel(crest); mBox.draw();
-        }
-        setMaterial(bronzeCol, bronzeSpec, 80.0f);
-        /* Left arm — raised, holding spear */
-        {
-            glm::mat4 arm=glm::translate(top(),glm::vec3(-0.32f,1.75f,0));
-            arm=glm::rotate(arm,glm::radians(-55.0f),glm::vec3(0,0,1));
-            arm=glm::scale(arm,glm::vec3(0.10f,0.55f,0.10f));
-            setModel(arm); mCylinder.draw();
-        }
-        /* Right arm — down, holding shield (box) */
-        {
-            glm::mat4 arm=glm::translate(top(),glm::vec3(0.32f,1.60f,0));
-            arm=glm::rotate(arm,glm::radians(20.0f),glm::vec3(0,0,1));
-            arm=glm::scale(arm,glm::vec3(0.10f,0.50f,0.10f));
-            setModel(arm); mCylinder.draw();
-        }
-        /* Shield */
-        setMaterial({0.55f,0.42f,0.25f},{0.35f,0.28f,0.18f},32.0f);
-        {
-            glm::mat4 sh=glm::translate(top(),glm::vec3(0.50f,1.55f,0));
-            sh=glm::scale(sh,glm::vec3(0.08f,0.48f,0.38f));
-            setModel(sh); mBox.draw();
-        }
-        /* Spear shaft */
-        setMaterial({0.42f,0.30f,0.15f},{0.20f,0.15f,0.08f},16.0f);
-        {
-            glm::mat4 sp=glm::translate(top(),glm::vec3(-0.70f,1.80f,0));
-            sp=glm::rotate(sp,glm::radians(-15.0f),glm::vec3(0,0,1));
-            sp=glm::scale(sp,glm::vec3(0.05f,1.60f,0.05f));
-            setModel(sp); mCylinder.draw();
-        }
-        /* Spear tip */
-        setMaterial(bronzeCol, bronzeSpec, 80.0f);
-        {
-            glm::mat4 tip=glm::translate(top(),glm::vec3(-1.06f,2.72f,0));
-            tip=glm::scale(tip,glm::vec3(0.08f,0.22f,0.08f));
-            setModel(tip); mSphere.draw();
-        }
-        /* Legs */
-        setMaterial(bronzeCol, bronzeSpec, 80.0f);
-        for (float s : {-0.13f, 0.13f}) {
-            glm::mat4 leg=glm::translate(top(),glm::vec3(s,1.0f,0));
-            leg=glm::scale(leg,glm::vec3(0.13f,0.60f,0.13f));
-            setModel(leg); mCylinder.draw();
-        }
-
-        popM(); /* statue */
+        setMaterial({0.75f,0.85f,1.00f}, {0.08f,0.08f,0.08f}, 8.0f, sky.ambStr);
+        glm::mat4 inner = glm::translate(top(), glm::vec3(0.0f, 0.031f, 0.0f));
+        inner = glm::scale(inner, glm::vec3(1.4f, 0.03f, 1.4f));
+        setModel(inner); mCylinder.draw();
     }
 
     /* ══════════════════════════════════════════════
@@ -656,9 +577,12 @@ void render() {
         /* Gimbal arm + bulb
            Bulb emissive scales with lightsOn. */
         {
-            glm::vec3 mountOff(0,bldgH+0.3f,0);
+            glm::vec3 sideDir = glm::cross(glm::vec3(0,1,0), B.toRoad);
+            if (glm::length(sideDir) < 0.001f) sideDir = glm::vec3(1,0,0);
+            sideDir = glm::normalize(sideDir);
+            glm::vec3 mountOff = sideDir * (B_HALF + 0.85f) + glm::vec3(0,bldgH+0.85f,0);
             float baseYaw = B.roadYaw;
-            float pitch   = glm::radians(78.0f);
+            float pitch   = glm::radians(40.0f);
             float swing   = glm::radians(SW_MAX) * sinf(globalTime * SW_SPD + (float)bi);
 
             pushM(top());
