@@ -114,7 +114,7 @@ void resetWorld() {
     carSpeed   = 0.0f;
     carFrozen  = false;
     wheelRot   = 0.0f;
-    headlightsOn = true;
+    headlightsOn = false;
     fanAngle   = 0.0f;
     fanSpeed   = FAN_BSPD;
     globalTime = 0.0f;
